@@ -4,7 +4,7 @@ This project aims to provide a simple and customizable pull to refresh implement
 
 <img src="https://d13yacurqjgara.cloudfront.net/users/125056/screenshots/1650317/realestate-pull_1-2-3.gif" alt="alt text" style="width:200;height:200">
 
-Check this [project on dribble] (https://dribbble.com/shots/1650317-Pull-to-Refresh-Rentals)
+Check this [project on dribbble] (https://dribbble.com/shots/1650317-Pull-to-Refresh-Rentals)
 
 [Hire us!] (http://yalantis.com/)
 
