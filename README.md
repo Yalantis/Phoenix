@@ -65,7 +65,7 @@ If you need to change progress state:
 ```
 #Compatibility
   
-  * Android Gelly Bean 4.1+
+  * Android Jelly Bean 4.1+
   
 # Changelog
 
