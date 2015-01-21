@@ -9,15 +9,15 @@ Check this [project on Behance] (https://www.behance.net/gallery/20411445/Mobile
 
 <img src="https://d13yacurqjgara.cloudfront.net/users/125056/screenshots/1650317/realestate-pull_1-2-3.gif" alt="alt text" style="width:200;height:200">
 
-## Usage
+#Usage
 
 *For a working implementation, Have a look at the Sample Project - sample*
 
-#### 1. Include the library as local library project or use Gradle.
+1. Include the library as local library project.
 
-    ``` compile 'com.yalantis:pulltorefresh:1.0.0' ```
+``` compile 'com.yalantis:contextmenu:1.0.0' ```
 
-#### 2. Include the PullToRefreshView widget in your layout.
+2. Include the PullToRefreshView widget in your layout.
 
 	```xml
     <com.yalantis.pulltorefresh.library.PullToRefreshView
@@ -35,7 +35,7 @@ Check this [project on Behance] (https://www.behance.net/gallery/20411445/Mobile
     </com.yalantis.pulltorefresh.library.PullToRefreshView>
     ```
 
-#### 3. In your `onCreate` method refer to the View and setup OnRefreshListener.
+3. In your `onCreate` method refer to the View and setup OnRefreshListener.
 	```java
     mPullToRefreshView = (PullToRefreshView) findViewById(R.id.pull_to_refresh);
     mPullToRefreshView.setOnRefreshListener(new PullToRefreshView.OnRefreshListener() {
@@ -51,7 +51,7 @@ Check this [project on Behance] (https://www.behance.net/gallery/20411445/Mobile
      });
      ```
 
-## Customization
+#Customization
 
 There is one attribute which applicable to `PullToRefreshView`.
 
@@ -63,12 +63,12 @@ To customize drawables you can change:
    * sky.png - background image
    * buildings.png - foreground image
 
-## Misc
-If you need to change progress state: 
+# Misc
+If you need to change progress state:
 ```java
 	mPullToRefreshView.setRefreshing(boolean isRefreshing)
 ```
-## Compatibility
+#Compatibility
   
   * Android Jelly Bean 4.1+
   
