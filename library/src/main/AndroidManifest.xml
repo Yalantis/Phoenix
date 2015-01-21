@@ -1,1 +1,5 @@
-<manifest package="com.yalantis.pulltorefresh.library" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.yalantis.pulltorefresh.library">
+
+    <application android:allowBackup="true" />
+</manifest>
