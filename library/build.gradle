@@ -1,8 +1,5 @@
 apply plugin: 'com.android.library'
 
-def versionMajor = 1
-def versionMinor = 0
-
 android {
     compileSdkVersion 21
     buildToolsVersion "21.1.2"
@@ -10,8 +7,8 @@ android {
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode versionMajor * 100 + versionMinor
-        versionName "${versionMajor}.${versionMinor}"
+        versionCode 1
+        versionName "1.0"
     }
     buildTypes {
         release {
@@ -25,3 +22,5 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:support-v4:21.0.3'
 }
+
+apply from: '../mavenpush.gradle'
