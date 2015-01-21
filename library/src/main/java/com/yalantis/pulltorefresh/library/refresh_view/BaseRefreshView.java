@@ -8,9 +8,6 @@ import android.graphics.drawable.Drawable;
 
 import com.yalantis.pulltorefresh.library.PullToRefreshView;
 
-/**
- * Created by Oleksii Shliama on 22/12/2014.
- */
 public abstract class BaseRefreshView extends Drawable implements Drawable.Callback, Animatable {
 
     private PullToRefreshView mRefreshLayout;
@@ -68,11 +65,6 @@ public abstract class BaseRefreshView extends Drawable implements Drawable.Callb
     @Override
     public void setColorFilter(ColorFilter cf) {
 
-    }
-
-    public int convertDpToPixel(int dp) {
-        float density = getContext().getResources().getDisplayMetrics().density;
-        return Math.round((float) dp * density);
     }
 
 }

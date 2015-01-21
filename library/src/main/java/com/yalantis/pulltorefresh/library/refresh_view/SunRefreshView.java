@@ -16,6 +16,7 @@ import android.view.animation.Transformation;
 
 import com.yalantis.pulltorefresh.library.PullToRefreshView;
 import com.yalantis.pulltorefresh.library.R;
+import com.yalantis.pulltorefresh.library.util.Utils;
 
 /**
  * Created by Oleksii Shliama on 22/12/2014.
@@ -82,12 +83,12 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
         mScreenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
         mSkyHeight = (int) (SKY_RATIO * mScreenWidth);
         mSkyTopOffset = (mSkyHeight * 0.38f);
-        mSkyMoveOffset = convertDpToPixel(15);
+        mSkyMoveOffset = Utils.convertDpToPixel(getContext(), 15);
 
         mTownHeight = (int) (TOWN_RATIO * mScreenWidth);
         mTownInitialTopOffset = (mParent.getTotalDragDistance() - mTownHeight * TOWN_INITIAL_SCALE);
         mTownFinalTopOffset = (mParent.getTotalDragDistance() - mTownHeight * TOWN_FINAL_SCALE);
-        mTownMoveOffset = convertDpToPixel(10);
+        mTownMoveOffset = Utils.convertDpToPixel(getContext(), 10);
 
         mSunLeftOffset = 0.3f * (float) mScreenWidth;
         mSunTopOffset = (mParent.getTotalDragDistance() * 0.1f);

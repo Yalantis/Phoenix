@@ -19,12 +19,10 @@ import android.widget.ImageView;
 
 import com.yalantis.pulltorefresh.library.refresh_view.BaseRefreshView;
 import com.yalantis.pulltorefresh.library.refresh_view.SunRefreshView;
+import com.yalantis.pulltorefresh.library.util.Utils;
 
 import java.security.InvalidParameterException;
 
-/**
- * Created by Oleksii Shliama on 22/12/2014.
- */
 public class PullToRefreshView extends ViewGroup {
 
     private static final int DRAG_MAX_DISTANCE = 120;
@@ -36,7 +34,6 @@ public class PullToRefreshView extends ViewGroup {
     public static final int MAX_OFFSET_ANIMATION_DURATION = 700;
 
     private static final int INVALID_POINTER = -1;
-
 
     private View mTarget;
     private ImageView mRefreshView;
@@ -67,7 +64,7 @@ public class PullToRefreshView extends ViewGroup {
 
         mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-        mTotalDragDistance = convertDpToPixel(DRAG_MAX_DISTANCE);
+        mTotalDragDistance = Utils.convertDpToPixel(context, DRAG_MAX_DISTANCE);
 
         mRefreshView = new ImageView(context);
 
@@ -398,10 +395,6 @@ public class PullToRefreshView extends ViewGroup {
 
         mTarget.layout(left, top + mCurrentOffsetTop, left + width - right, top + height - bottom + mCurrentOffsetTop);
         mRefreshView.layout(left, top, left + width - right, top + height - bottom);
-    }
-
-    public int convertDpToPixel(int dp) {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getContext().getResources().getDisplayMetrics());
     }
 
     public void setOnRefreshListener(OnRefreshListener listener) {
