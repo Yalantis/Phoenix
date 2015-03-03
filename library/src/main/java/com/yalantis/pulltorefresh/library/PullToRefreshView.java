@@ -5,7 +5,6 @@ import android.content.res.TypedArray;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
-import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -18,6 +17,7 @@ import android.widget.AbsListView;
 import android.widget.ImageView;
 
 import com.yalantis.pulltorefresh.library.refresh_view.BaseRefreshView;
+import com.yalantis.pulltorefresh.library.refresh_view.JetRefreshView;
 import com.yalantis.pulltorefresh.library.refresh_view.SunRefreshView;
 import com.yalantis.pulltorefresh.library.util.Utils;
 
@@ -83,7 +83,8 @@ public class PullToRefreshView extends ViewGroup {
                 mBaseRefreshView = new SunRefreshView(getContext(), this);
                 break;
             case STYLE_JET:
-                // TODO
+                mBaseRefreshView = new JetRefreshView(getContext(), this);
+                break;
             default:
                 throw new InvalidParameterException("Type does not exist");
         }
