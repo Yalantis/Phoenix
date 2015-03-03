@@ -84,6 +84,8 @@ public class PullToRefreshView extends ViewGroup {
                 break;
             case STYLE_JET:
                 // TODO
+            case SIMPLE_DRAWABLE:
+                mBaseRefreshView = new SimpleDrawableRefresh(getContext(), this, "ic_launchers");
             default:
                 throw new InvalidParameterException("Type does not exist");
         }
