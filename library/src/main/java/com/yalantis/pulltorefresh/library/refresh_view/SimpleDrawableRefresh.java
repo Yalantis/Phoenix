@@ -1,4 +1,4 @@
-package com.pullrefreshexample.refresh_view;
+package com.yalantis.pulltorefresh.refresh_view;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -9,14 +9,13 @@ import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Animatable;
-import android.graphics.drawable.Drawable;
 import android.view.animation.Animation;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 
-import com.pullrefreshexample.PullToRefreshView;
-import com.pullrefreshexample.R;
+import com.simplepulltorefreshexample.PullToRefreshView;
+
 
 public class SimpleDrawableRefresh extends BaseRefreshView implements Animatable {
 
@@ -62,7 +61,7 @@ public class SimpleDrawableRefresh extends BaseRefreshView implements Animatable
 
     private void initiateDimens() {
         mScreenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
-        mSimpleDrawableLeftOffset = 0.3f * (float) mScreenWidth;
+        mSimpleDrawableLeftOffset = 0.5f * (float) mScreenWidth;
         mSimpleDrawableTopOffset = (mParent.getTotalDragDistance() * 0.1f);
 
         mTop = -mParent.getTotalDragDistance();
@@ -89,11 +88,11 @@ public class SimpleDrawableRefresh extends BaseRefreshView implements Animatable
     public void draw(Canvas canvas) {
         final int saveCount = canvas.save();
         canvas.translate(0, mTop);
-        drawSun(canvas);
+        drawCustomImage(canvas);
         canvas.restoreToCount(saveCount);
     }
 
-    private void drawSun(Canvas canvas) {
+    private void drawCustomImage(Canvas canvas) {
         Matrix matrix = mMatrix;
         matrix.reset();
 
@@ -102,34 +101,34 @@ public class SimpleDrawableRefresh extends BaseRefreshView implements Animatable
             dragPercent = (dragPercent + 9.0f) / 10;
         }
 
-        float sunRadius = (float) mSimpleDrawableSize / 2.0f;
-        float sunRotateGrowth = SIMPLE_DRAWABLE_INITIAL_ROTATE_GROWTH;
+        float customImageRadius = (float) mSimpleDrawableSize / 2.0f;
+        float customImageRotateGrowth = SIMPLE_DRAWABLE_INITIAL_ROTATE_GROWTH;
 
         float offsetX = mSimpleDrawableLeftOffset;
         float offsetY = mSimpleDrawableTopOffset
-                + (mParent.getTotalDragDistance() / 2) * (1.0f - dragPercent) // Move the sun up
+                + (mParent.getTotalDragDistance() / 2) * (1.0f - dragPercent) // Move the custom image up
                 - mTop; // Depending on Canvas position
 
         float scalePercentDelta = dragPercent - SCALE_START_PERCENT;
         if (scalePercentDelta > 0) {
             float scalePercent = scalePercentDelta / (1.0f - SCALE_START_PERCENT);
-            float sunScale = 1.0f - (1.0f - SIMPLE_DRAWABLE_FINAL_SCALE) * scalePercent;
-            sunRotateGrowth += (SIMPLE_DRAWABLE_FINAL_ROTATE_GROWTH - SIMPLE_DRAWABLE_INITIAL_ROTATE_GROWTH) * scalePercent;
+            float customImageScale = 1.0f - (1.0f - SIMPLE_DRAWABLE_FINAL_SCALE) * scalePercent;
+            customImageRotateGrowth += (SIMPLE_DRAWABLE_FINAL_ROTATE_GROWTH - SIMPLE_DRAWABLE_INITIAL_ROTATE_GROWTH) * scalePercent;
 
-            matrix.preTranslate(offsetX + (sunRadius - sunRadius * sunScale), offsetY * (2.0f - sunScale));
-            matrix.preScale(sunScale, sunScale);
+            matrix.preTranslate(offsetX + (customImageRadius - customImageRadius * customImageScale), offsetY * (2.0f - customImageScale));
+            matrix.preScale(customImageScale, customImageScale);
 
-            offsetX += sunRadius;
-            offsetY = offsetY * (2.0f - sunScale) + sunRadius * sunScale;
+            offsetX += customImageRadius;
+            offsetY = offsetY * (2.0f - customImageScale) + customImageRadius * customImageScale;
         } else {
             matrix.postTranslate(offsetX, offsetY);
 
-            offsetX += sunRadius;
-            offsetY += sunRadius;
+            offsetX += customImageRadius;
+            offsetY += customImageRadius;
         }
 
         matrix.postRotate(
-                (isRefreshing ? -360 : 360) * mRotate * (isRefreshing ? 1 : sunRotateGrowth),
+                (isRefreshing ? -360 : 360) * mRotate * (isRefreshing ? 1 : customImageRotateGrowth),
                 offsetX,
                 offsetY);
 

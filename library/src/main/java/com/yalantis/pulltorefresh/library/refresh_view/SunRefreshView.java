@@ -1,4 +1,4 @@
-package com.yalantis.pulltorefresh.library.refresh_view;
+package com.yalantis.pulltorefresh.refresh_view;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -14,9 +14,10 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 
-import com.yalantis.pulltorefresh.library.PullToRefreshView;
-import com.yalantis.pulltorefresh.library.R;
-import com.yalantis.pulltorefresh.library.util.Utils;
+import com.simplepulltorefreshexample.PullToRefreshView;
+import com.simplepulltorefreshexample.R;
+import com.simplepulltorefreshexample.util.Utils;
+
 
 /**
  * Created by Oleksii Shliama on 22/12/2014.
