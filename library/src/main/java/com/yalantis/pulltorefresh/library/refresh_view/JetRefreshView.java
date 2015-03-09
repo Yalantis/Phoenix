@@ -6,17 +6,20 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Animatable;
 import android.view.animation.Animation;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
-import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 
 import com.yalantis.pulltorefresh.library.PullToRefreshView;
 import com.yalantis.pulltorefresh.library.R;
-import com.yalantis.pulltorefresh.library.util.Utils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Apisov on 02/03/2015.
@@ -27,41 +30,34 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     private static final float SCALE_START_PERCENT = 0.5f;
     private static final int ANIMATION_DURATION = 1000;
 
-    private final static float SKY_RATIO = 0.65f;
-    private static final float SKY_INITIAL_SCALE = 1.05f;
+    private static final float SIDE_CLOUDS_INITIAL_SCALE = 1.05f;
+    private static final float SIDE_CLOUDS_FINAL_SCALE = 1.55f;
 
-    private final static float CENTER_CLOUDS_RATIO = 0.22f;
-    private static final float CENTER_CLOUDS_INITIAL_SCALE = 0.5f;
-    private static final float CENTER_CLOUDS_FINAL_SCALE = 1.05f;
+    private static final float CENTER_CLOUDS_INITIAL_SCALE = 0.8f;
+    private static final float CENTER_CLOUDS_FINAL_SCALE = 1.30f;
 
-    private static final float SUN_FINAL_SCALE = 0.75f;
-    private static final float SUN_INITIAL_ROTATE_GROWTH = 1.2f;
-    private static final float SUN_FINAL_ROTATE_GROWTH = 1.5f;
-
-    private static final Interpolator LINEAR_INTERPOLATOR = new LinearInterpolator();
+    private static final Interpolator DECELERATE_INTERPOLATOR = new DecelerateInterpolator();
+    public static final int LOADING_ANIMATION_COEFFICIENT = 80;
+    public static final int SLOW_DOWN_ANIMATION_COEFFICIENT = 6;
 
     private PullToRefreshView mParent;
     private Matrix mMatrix;
+    private Matrix mAdditionalMatrix;
     private Animation mAnimation;
+    private Paint mWinterPaint;
 
     private int mTop;
     private int mScreenWidth;
+    private boolean mInverseDirection;
 
-    private int mSkyHeight;
-    private float mSkyTopOffset;
-    private float mSkyMoveOffset;
+    //KEY: Y position, Value: X position
+    private Map<Float, Float> mWinters;
 
-    private int mCenterCloudsHeight;
-    private float mCenterCloudsInitialTopOffset;
-    private float mCenterCloudsFinalTopOffset;
-    private float mCenterCloudsMoveOffset;
-
-    private int mJetSize = 200;
-    private float mJetLeftOffset;
+    private int mJetWidthCenter;
+    private int mJetHeightCenter;
     private float mJetTopOffset;
 
     private float mPercent = 0.0f;
-    private float mRotate = 0.0f;
 
     private Bitmap mJet;
     private Bitmap mFrontClouds;
@@ -69,51 +65,51 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     private Bitmap mRightClouds;
 
     private boolean isRefreshing = false;
+    private boolean mEndOfRefreshing;
+    private float mLoadingAnimationTime;
+    private int mFrontCloudHeightCenter;
+    private int mFrontCloudWidthCenter;
+    private float mLineWidth;
+    private float mLastAnimationTime;
 
     public JetRefreshView(Context context, PullToRefreshView parent) {
         super(context, parent);
         mParent = parent;
         mMatrix = new Matrix();
+        mAdditionalMatrix = new Matrix();
+        mWinters = new HashMap<>();
 
         initiateDimens();
         createBitmaps();
         setupAnimations();
+        mWinterPaint = new Paint();
+        mWinterPaint.setColor(getContext().getResources().getColor(android.R.color.darker_gray));
+        mWinterPaint.setStrokeWidth(10);
+        mWinterPaint.setAlpha(125);
     }
 
     private void initiateDimens() {
         mScreenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
-        mSkyHeight = (int) (SKY_RATIO * mScreenWidth);
-        mSkyTopOffset = (mSkyHeight * 0.38f);
-        mSkyMoveOffset = Utils.convertDpToPixel(getContext(), 15);
-
-        mCenterCloudsHeight = (int) (CENTER_CLOUDS_RATIO * mScreenWidth);
-        mCenterCloudsInitialTopOffset = (mParent.getTotalDragDistance() - mCenterCloudsHeight * CENTER_CLOUDS_INITIAL_SCALE);
-        mCenterCloudsFinalTopOffset = (mParent.getTotalDragDistance() - mCenterCloudsHeight * CENTER_CLOUDS_FINAL_SCALE);
-        mCenterCloudsMoveOffset = Utils.convertDpToPixel(getContext(), 10);
-
-        mJetLeftOffset = 0.1f * (float) mScreenWidth;
-        mJetTopOffset = (mParent.getTotalDragDistance() * 0.5f);
-
+        mJetTopOffset = mParent.getTotalDragDistance() * 0.5f;
         mTop = -mParent.getTotalDragDistance();
+        mLineWidth = (float) (Math.random() * 100);
     }
 
     private void createBitmaps() {
         mLeftClouds = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.clouds_left);
-        mLeftClouds = Bitmap.createScaledBitmap(mLeftClouds, mScreenWidth, mSkyHeight, true);
-
         mRightClouds = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.clouds_right);
-        mRightClouds = Bitmap.createScaledBitmap(mRightClouds, mScreenWidth, mSkyHeight, true);
-
         mFrontClouds = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.clouds_center);
-        mFrontClouds = Bitmap.createScaledBitmap(mFrontClouds, mScreenWidth, (int) (mScreenWidth * CENTER_CLOUDS_RATIO), true);
 
         mJet = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.airplane);
+        mJetWidthCenter = mJet.getWidth() / 2;
+        mJetHeightCenter = mJet.getHeight() / 2;
+        mFrontCloudWidthCenter = mFrontClouds.getWidth() / 2;
+        mFrontCloudHeightCenter = mFrontClouds.getHeight() / 2;
     }
 
     @Override
     public void setPercent(float percent, boolean invalidate) {
         setPercent(percent);
-        if (invalidate) setRotate(percent);
     }
 
     @Override
@@ -125,74 +121,173 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     @Override
     public void draw(Canvas canvas) {
         final int saveCount = canvas.save();
-        canvas.translate(0, mTop);
 
+        // DRAW BACKGROUND.
+        canvas.drawColor(getContext().getResources().getColor(R.color.jet_sky_background));
+
+        if (isRefreshing) {
+            while (mWinters.size() < 5) {
+                float y = (float) (mParent.getTotalDragDistance() / (Math.random() * 10));
+                float x = (float) (Math.random() * 500);
+                mWinters.put(y, x);
+                drawWinter(canvas, y, x);
+            }
+            if (mWinters.size() >= 5) {
+                for (Map.Entry<Float, Float> winter : mWinters.entrySet()) {
+                    drawWinter(canvas, winter.getKey(), winter.getValue());
+                }
+            }
+            mLastAnimationTime = mLoadingAnimationTime;
+        }
         drawJet(canvas);
         drawSideClouds(canvas);
-        drawFrontClouds(canvas);
+        drawCenterClouds(canvas);
 
         canvas.restoreToCount(saveCount);
     }
 
-    private void drawSideClouds(Canvas canvas) {
-        Matrix matrix = mMatrix;
-        matrix.reset();
+    private void drawWinter(Canvas canvas, float y, float xOffset) {
+        float coef = mScreenWidth / (LOADING_ANIMATION_COEFFICIENT / SLOW_DOWN_ANIMATION_COEFFICIENT);
+        float time = mLoadingAnimationTime;
 
-        float dragPercent = Math.min(1f, Math.abs(mPercent));
-
-        float skyScale;
-        float scalePercentDelta = dragPercent - SCALE_START_PERCENT;
-        if (scalePercentDelta > 0) {
-            /** Change skyScale between {@link #SKY_INITIAL_SCALE} and 1.0f depending on {@link #mPercent} */
-            float scalePercent = scalePercentDelta / (1.0f - SCALE_START_PERCENT);
-            skyScale = SKY_INITIAL_SCALE - (SKY_INITIAL_SCALE - 1.0f) * scalePercent;
-        } else {
-            skyScale = SKY_INITIAL_SCALE;
+        //HORRIBLE HACK FOR REVERS ANIMATION THAT SHOULD WORK LIKE RESTART ANIMATION
+        if (mLastAnimationTime - mLoadingAnimationTime > 0) {
+            mInverseDirection = true;
+            time = LOADING_ANIMATION_COEFFICIENT - mLoadingAnimationTime;
+//            mWinters.remove(y);
+            return;
         }
 
-        float offsetX = -(mScreenWidth * skyScale - mScreenWidth) / 2.0f;
-        float offsetY = (1.0f - dragPercent) * mParent.getTotalDragDistance() - mSkyTopOffset // Offset canvas moving
-                - mSkyHeight * (skyScale - 1.0f) / 2 // Offset sky scaling
-                + mSkyMoveOffset * dragPercent; // Give it a little move top -> bottom
-
-        matrix.postScale(skyScale, skyScale);
-        matrix.postTranslate(offsetX, offsetY);
-        canvas.drawBitmap(mLeftClouds, matrix, null);
+        float x = (mScreenWidth - (time * coef)) + xOffset;
+        float xEnd = x + mLineWidth;
+        canvas.drawLine(x, y, xEnd, y, mWinterPaint);
     }
 
-    private void drawFrontClouds(Canvas canvas) {
-        Matrix matrix = mMatrix;
-        matrix.reset();
+    private void drawSideClouds(Canvas canvas) {
+        Matrix matrixLeftClouds = mMatrix;
+        Matrix matrixRightClouds = mAdditionalMatrix;
+        matrixLeftClouds.reset();
+        matrixRightClouds.reset();
 
         float dragPercent = Math.min(1f, Math.abs(mPercent));
 
-        float townScale;
-        float townTopOffset;
-        float townMoveOffset;
-        float scalePercentDelta = dragPercent - SCALE_START_PERCENT;
-        if (scalePercentDelta > 0) {
-            /**
-             * Change townScale between {@link #CENTER_CLOUDS_INITIAL_SCALE} and {@link #CENTER_CLOUDS_FINAL_SCALE} depending on {@link #mPercent}
-             * Change townTopOffset between {@link #mCenterCloudsInitialTopOffset} and {@link #mCenterCloudsFinalTopOffset} depending on {@link #mPercent}
-             */
-            float scalePercent = scalePercentDelta / (1.0f - SCALE_START_PERCENT);
-            townScale = CENTER_CLOUDS_INITIAL_SCALE + (CENTER_CLOUDS_FINAL_SCALE - CENTER_CLOUDS_INITIAL_SCALE) * scalePercent;
-            townTopOffset = mCenterCloudsInitialTopOffset - (mCenterCloudsFinalTopOffset - mCenterCloudsInitialTopOffset) * scalePercent;
-            townMoveOffset = mCenterCloudsMoveOffset * (1.0f - scalePercent);
-        } else {
-            float scalePercent = dragPercent / SCALE_START_PERCENT;
-            townScale = CENTER_CLOUDS_INITIAL_SCALE;
-            townTopOffset = mCenterCloudsInitialTopOffset;
-            townMoveOffset = mCenterCloudsMoveOffset * scalePercent;
+        boolean overdrag = false;
+
+        if (mPercent > 1.0f) {
+            overdrag = true;
         }
 
-        float offsetX = -(mScreenWidth * townScale - mScreenWidth) / 2.0f;
-        float offsetY = (1.0f - dragPercent) * mParent.getTotalDragDistance() // Offset canvas moving
-                + townTopOffset
-                - mCenterCloudsHeight * (townScale - 1.0f) / 2 // Offset town scaling
-                + townMoveOffset; // Give it a little move
+        float scale;
+        float scalePercentDelta = dragPercent - SCALE_START_PERCENT;
+        if (scalePercentDelta > 0) {
+            float scalePercent = scalePercentDelta / (1.0f - SCALE_START_PERCENT);
+            scale = SIDE_CLOUDS_INITIAL_SCALE + (SIDE_CLOUDS_FINAL_SCALE - SIDE_CLOUDS_INITIAL_SCALE) * scalePercent;
+        } else {
+            scale = SIDE_CLOUDS_INITIAL_SCALE;
+        }
 
-        matrix.postScale(townScale, townScale);
+        float dragYOffset = mParent.getTotalDragDistance() * (1.0f - dragPercent);
+        int startParallaxHeight = mParent.getTotalDragDistance() / 2 - mLeftClouds.getHeight() / 2;
+        boolean parallax = false;
+        if (dragYOffset < startParallaxHeight) {
+            parallax = true;
+        }
+
+        float offsetRightX = mScreenWidth - mRightClouds.getWidth();
+        float offsetRightY = (parallax
+                ? mParent.getTotalDragDistance() * dragPercent - mLeftClouds.getHeight()
+                : dragYOffset)
+                + (overdrag ? mTop : 0);
+
+        float offsetLeftX = 0;
+        float offsetLeftY = (parallax
+                ? mParent.getTotalDragDistance() * dragPercent - mLeftClouds.getHeight()
+                : dragYOffset)
+                + (overdrag ? mTop : 0);
+
+
+        if (isRefreshing) {
+            if (isFirstLoadingAnimationPart()) {
+                offsetLeftY += mLoadingAnimationTime / 4;
+                offsetRightX -= mLoadingAnimationTime / 2;
+            } else if (isSecondLoadingAnimationPart()) {
+                offsetLeftY += getSecondPartAnimationValue() / 4;
+                offsetRightX -= getSecondPartAnimationValue() / 2;
+            } else if (isThirdLoadingAnimationPart()) {
+                offsetLeftY -= getThirdAnimationPartValue() / 4;
+                offsetRightX += getThirdAnimationPartValue() / 2;
+            } else if (isFourthLoadingAnimationPart()) {
+                offsetLeftY -= getFourthAnimationPartValue() / 2;
+                offsetRightX += getFourthAnimationPartValue() / 4;
+            }
+        }
+
+        matrixRightClouds.postScale(scale, scale, mRightClouds.getWidth() / 2, mRightClouds.getHeight() / 2);
+        matrixRightClouds.postTranslate(offsetRightX, offsetRightY);
+
+        matrixLeftClouds.postScale(scale, scale, mLeftClouds.getWidth() / 2, mLeftClouds.getHeight() / 2);
+        matrixLeftClouds.postTranslate(offsetLeftX, offsetLeftY);
+
+        canvas.drawBitmap(mLeftClouds, matrixLeftClouds, null);
+        canvas.drawBitmap(mRightClouds, matrixRightClouds, null);
+    }
+
+    private void drawCenterClouds(Canvas canvas) {
+        Matrix matrix = mMatrix;
+        matrix.reset();
+        float dragPercent = Math.min(1f, Math.abs(mPercent));
+
+        float scale;
+        float overdragPercent = 0;
+        boolean overdrag = false;
+
+        if (mPercent > 1.0f) {
+            overdrag = true;
+            overdragPercent = Math.abs(1.0f - mPercent);
+        }
+
+        float scalePercentDelta = dragPercent - SCALE_START_PERCENT;
+        if (scalePercentDelta > 0) {
+            float scalePercent = scalePercentDelta / (1.0f - SCALE_START_PERCENT);
+            scale = CENTER_CLOUDS_INITIAL_SCALE + (CENTER_CLOUDS_FINAL_SCALE - CENTER_CLOUDS_INITIAL_SCALE) * scalePercent;
+        } else {
+            scale = CENTER_CLOUDS_INITIAL_SCALE;
+        }
+
+        float parallaxPercent = 0;
+        boolean parallax = false;
+        float dragYOffset = mParent.getTotalDragDistance() * dragPercent;
+        int startParallaxHeight = mParent.getTotalDragDistance() - mFrontCloudHeightCenter;
+
+        if (dragYOffset > startParallaxHeight) {
+            parallax = true;
+            parallaxPercent = dragYOffset - startParallaxHeight;
+        }
+
+        float offsetX = (mScreenWidth / 2) - mFrontCloudWidthCenter;
+        float offsetY = dragYOffset
+                - (parallax ? mFrontCloudHeightCenter + parallaxPercent : mFrontCloudHeightCenter)
+                + (overdrag ? mTop : 0);
+
+        float sx = overdrag ? scale + overdragPercent / 4 : scale;
+        float sy = overdrag ? scale + overdragPercent / 2 : scale;
+
+        if (isRefreshing && !overdrag) {
+            if (isFirstLoadingAnimationPart()) {
+                sx = scale - (mLoadingAnimationTime / LOADING_ANIMATION_COEFFICIENT) / 8;
+                sy = sx;
+            } else if (isSecondLoadingAnimationPart()) {
+                sx = scale - (getSecondPartAnimationValue() / LOADING_ANIMATION_COEFFICIENT) / 8;
+                sy = sx;
+            } else if (isThirdLoadingAnimationPart()) {
+                sx = scale + (getThirdAnimationPartValue() / LOADING_ANIMATION_COEFFICIENT) / 6;
+                sy = sx;
+            } else if (isFourthLoadingAnimationPart()) {
+                sx = scale + (getFourthAnimationPartValue() / LOADING_ANIMATION_COEFFICIENT) / 6;
+                sy = sx;
+            }
+        }
+        matrix.postScale(sx, sy, mFrontCloudWidthCenter, mFrontCloudHeightCenter);
         matrix.postTranslate(offsetX, offsetY);
 
         canvas.drawBitmap(mFrontClouds, matrix, null);
@@ -203,48 +298,97 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         matrix.reset();
 
         float dragPercent = mPercent;
-        if (dragPercent > 1.0f) { // Slow down if pulling over set height
-            dragPercent = (dragPercent + 9.0f) / 10;
+        float rotateAngle = 0;
+
+        // Check overdrag
+        if (dragPercent > 1.0f && !mEndOfRefreshing) {
+            rotateAngle = dragPercent % 1 * 10;
+            dragPercent = 1.0f;
         }
 
-        float offsetX = mJetLeftOffset
-                + (mParent.getTotalDragDistance() / 2) * (1.0f + dragPercent); // Move the jet right
-        float offsetY = mJetTopOffset
-                + (mParent.getTotalDragDistance() / 2) * (1.0f - dragPercent) // Move the jet up
-                - mTop; // Depending on Canvas position
+        float offsetX = ((mScreenWidth * dragPercent) / 2) - mJetWidthCenter;
 
-        float scalePercentDelta = dragPercent - SCALE_START_PERCENT;
-        if (scalePercentDelta > 0) {
-            matrix.preTranslate(offsetX, offsetY);
-        } else {
-            matrix.postTranslate(offsetX, offsetY);
+        float offsetY = mJetTopOffset
+                + (mParent.getTotalDragDistance() / 2)
+                * (1.0f - dragPercent)
+                - mJetHeightCenter;
+
+        if (isRefreshing) {
+            if (isFirstLoadingAnimationPart()) {
+                offsetY -= mLoadingAnimationTime;
+            } else if (isSecondLoadingAnimationPart()) {
+                offsetY -= getSecondPartAnimationValue();
+            } else if (isThirdLoadingAnimationPart()) {
+                offsetY += getThirdAnimationPartValue();
+            } else if (isFourthLoadingAnimationPart()) {
+                offsetY += getFourthAnimationPartValue();
+            }
+        }
+
+        matrix.setTranslate(offsetX, offsetY);
+
+        if (dragPercent == 1.0f) {
+            matrix.preRotate(rotateAngle, mJetWidthCenter, mJetHeightCenter);
         }
 
         canvas.drawBitmap(mJet, matrix, null);
+    }
+
+    private float getFourthAnimationPartValue() {
+        return getThirdTimeAnimationPart() - (mLoadingAnimationTime - getFourthTimeAnimationPart());
+    }
+
+    private float getThirdAnimationPartValue() {
+        return mLoadingAnimationTime - getSecondTimeAnimationPart();
+    }
+
+    private int getSecondTimeAnimationPart() {
+        return LOADING_ANIMATION_COEFFICIENT / 2;
+    }
+
+    private int getThirdTimeAnimationPart() {
+        return getFourthTimeAnimationPart() * 3;
+    }
+
+    private boolean isFourthLoadingAnimationPart() {
+        return mLoadingAnimationTime > getThirdTimeAnimationPart();
+    }
+
+    private boolean isThirdLoadingAnimationPart() {
+        return mLoadingAnimationTime < getThirdTimeAnimationPart();
+    }
+
+    private boolean isSecondLoadingAnimationPart() {
+        return mLoadingAnimationTime < getSecondTimeAnimationPart();
+    }
+
+    private float getSecondPartAnimationValue() {
+        return getFourthTimeAnimationPart() - (mLoadingAnimationTime - getFourthTimeAnimationPart());
+    }
+
+    private boolean isFirstLoadingAnimationPart() {
+        return mLoadingAnimationTime < getFourthTimeAnimationPart();
+    }
+
+    private int getFourthTimeAnimationPart() {
+        return LOADING_ANIMATION_COEFFICIENT / 4;
+    }
+
+    public void setEndOfRefreshing(boolean endOfRefreshing) {
+        mEndOfRefreshing = endOfRefreshing;
     }
 
     public void setPercent(float percent) {
         mPercent = percent;
     }
 
-    public void setRotate(float rotate) {
-        mRotate = rotate;
-        invalidateSelf();
-    }
-
     public void resetOriginals() {
         setPercent(0);
-        setRotate(0);
     }
 
     @Override
     protected void onBoundsChange(Rect bounds) {
         super.onBoundsChange(bounds);
-    }
-
-    @Override
-    public void setBounds(int left, int top, int right, int bottom) {
-        super.setBounds(left, top, right, mSkyHeight + top);
     }
 
     @Override
@@ -278,6 +422,7 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     public void stop() {
         mParent.clearAnimation();
         isRefreshing = false;
+        mEndOfRefreshing = false;
         resetOriginals();
     }
 
@@ -285,13 +430,19 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         mAnimation = new Animation() {
             @Override
             public void applyTransformation(float interpolatedTime, Transformation t) {
-                setRotate(interpolatedTime);
+                setLoadingAnimationTime(interpolatedTime);
             }
         };
         mAnimation.setRepeatCount(Animation.INFINITE);
-        mAnimation.setRepeatMode(Animation.RESTART);
-        mAnimation.setInterpolator(LINEAR_INTERPOLATOR);
+        mAnimation.setRepeatMode(Animation.REVERSE);
+        mAnimation.setInterpolator(DECELERATE_INTERPOLATOR);
         mAnimation.setDuration(ANIMATION_DURATION);
+    }
+
+    private void setLoadingAnimationTime(float loadingAnimationTime) {
+        /**SLOW DOWN ANIMATION IN {@link #SLOW_DOWN_ANIMATION_COEFFICIENT} time */
+        mLoadingAnimationTime = LOADING_ANIMATION_COEFFICIENT * (loadingAnimationTime / SLOW_DOWN_ANIMATION_COEFFICIENT);
+        invalidateSelf();
     }
 
 }
