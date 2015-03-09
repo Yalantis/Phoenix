@@ -2,6 +2,7 @@ package com.yalantis.pulltorefresh.library;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.annotation.NonNull;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
@@ -32,6 +33,8 @@ public class PullToRefreshView extends ViewGroup {
     public static final int STYLE_SUN = 0;
     public static final int STYLE_JET = 1;
     public static final int MAX_OFFSET_ANIMATION_DURATION = 700;
+    public static final int MAX_OFFSET_JET_END_ANIMATION_DURATION = 400;
+    public static final int MAX_JET_RESTORE_ANIMATION_DURATION = 2350;
 
     private static final int INVALID_POINTER = -1;
 
@@ -51,6 +54,7 @@ public class PullToRefreshView extends ViewGroup {
     private float mFromDragPercent;
     private boolean mNotify;
     private OnRefreshListener mListener;
+    private int mRefreshViewType;
 
     public PullToRefreshView(Context context) {
         this(context, null);
@@ -59,7 +63,7 @@ public class PullToRefreshView extends ViewGroup {
     public PullToRefreshView(Context context, AttributeSet attrs) {
         super(context, attrs);
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.RefreshView);
-        final int type = a.getInteger(R.styleable.RefreshView_type, STYLE_SUN);
+        mRefreshViewType = a.getInteger(R.styleable.RefreshView_type, STYLE_SUN);
         a.recycle();
 
         mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
@@ -68,7 +72,7 @@ public class PullToRefreshView extends ViewGroup {
 
         mRefreshView = new ImageView(context);
 
-        setRefreshStyle(type);
+        setRefreshStyle();
 
         addView(mRefreshView);
 
@@ -76,9 +80,9 @@ public class PullToRefreshView extends ViewGroup {
         ViewCompat.setChildrenDrawingOrderEnabled(this, true);
     }
 
-    public void setRefreshStyle(int type) {
+    public void setRefreshStyle() {
         setRefreshing(false);
-        switch (type) {
+        switch (mRefreshViewType) {
             case STYLE_SUN:
                 mBaseRefreshView = new SunRefreshView(getContext(), this);
                 break;
@@ -168,7 +172,7 @@ public class PullToRefreshView extends ViewGroup {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent ev) {
+    public boolean onTouchEvent(@NonNull MotionEvent ev) {
 
         if (!mIsBeingDragged) {
             return super.onTouchEvent(ev);
@@ -224,7 +228,7 @@ public class PullToRefreshView extends ViewGroup {
                     setRefreshing(true, true);
                 } else {
                     mRefreshing = false;
-                    animateOffsetToStartPosition();
+                    animateOffsetToPosition(mAnimateToStartPosition, false);
                 }
                 mActivePointerId = INVALID_POINTER;
                 return false;
@@ -234,17 +238,21 @@ public class PullToRefreshView extends ViewGroup {
         return true;
     }
 
-    private void animateOffsetToStartPosition() {
+    private void animateOffsetToPosition(Animation animation, boolean isEndJetAnimation) {
         mFrom = mCurrentOffsetTop;
         mFromDragPercent = mCurrentDragPercent;
-        long animationDuration = Math.abs((long) (MAX_OFFSET_ANIMATION_DURATION * mFromDragPercent));
+        long animationDuration = Math.abs(
+                (long) (!isEndJetAnimation
+                        ? MAX_OFFSET_ANIMATION_DURATION
+                        : MAX_OFFSET_JET_END_ANIMATION_DURATION
+                        * mFromDragPercent));
 
-        mAnimateToStartPosition.reset();
-        mAnimateToStartPosition.setDuration(animationDuration);
-        mAnimateToStartPosition.setInterpolator(mDecelerateInterpolator);
-        mAnimateToStartPosition.setAnimationListener(mToStartListener);
+        animation.reset();
+        animation.setDuration(animationDuration);
+        animation.setInterpolator(mDecelerateInterpolator);
+        animation.setAnimationListener(mToStartListener);
         mRefreshView.clearAnimation();
-        mRefreshView.startAnimation(mAnimateToStartPosition);
+        mRefreshView.startAnimation(animation);
     }
 
     private void animateOffsetToCorrectPosition() {
@@ -252,7 +260,9 @@ public class PullToRefreshView extends ViewGroup {
         mFromDragPercent = mCurrentDragPercent;
 
         mAnimateToCorrectPosition.reset();
-        mAnimateToCorrectPosition.setDuration(MAX_OFFSET_ANIMATION_DURATION);
+        mAnimateToCorrectPosition.setDuration(mRefreshViewType == STYLE_SUN
+                ? MAX_OFFSET_ANIMATION_DURATION
+                : MAX_JET_RESTORE_ANIMATION_DURATION);
         mAnimateToCorrectPosition.setInterpolator(mDecelerateInterpolator);
         mRefreshView.clearAnimation();
         mRefreshView.startAnimation(mAnimateToCorrectPosition);
@@ -266,7 +276,7 @@ public class PullToRefreshView extends ViewGroup {
             }
         } else {
             mBaseRefreshView.stop();
-            animateOffsetToStartPosition();
+            animateOffsetToPosition(mAnimateToStartPosition, false);
         }
         mCurrentOffsetTop = mTarget.getTop();
     }
@@ -275,6 +285,13 @@ public class PullToRefreshView extends ViewGroup {
         @Override
         public void applyTransformation(float interpolatedTime, Transformation t) {
             moveToStart(interpolatedTime);
+        }
+    };
+
+    private Animation mAnimateToEndPosition = new Animation() {
+        @Override
+        public void applyTransformation(float interpolatedTime, Transformation t) {
+            moveToEnd(interpolatedTime);
         }
     };
 
@@ -291,11 +308,22 @@ public class PullToRefreshView extends ViewGroup {
 
             setTargetOffsetTop(offset, false /* requires update */);
         }
+
     };
 
     private void moveToStart(float interpolatedTime) {
         int targetTop = mFrom - (int) (mFrom * interpolatedTime);
         float targetPercent = mFromDragPercent * (1.0f - interpolatedTime);
+        int offset = targetTop - mTarget.getTop();
+
+        mCurrentDragPercent = targetPercent;
+        mBaseRefreshView.setPercent(mCurrentDragPercent, true);
+        setTargetOffsetTop(offset, false);
+    }
+
+    private void moveToEnd(float interpolatedTime) {
+        int targetTop = mFrom - (int) (mFrom * interpolatedTime);
+        float targetPercent = mFromDragPercent * (1.0f + interpolatedTime);
         int offset = targetTop - mTarget.getTop();
 
         mCurrentDragPercent = targetPercent;
@@ -318,7 +346,12 @@ public class PullToRefreshView extends ViewGroup {
                 mBaseRefreshView.setPercent(1f, true);
                 animateOffsetToCorrectPosition();
             } else {
-                animateOffsetToStartPosition();
+                if (mRefreshViewType == STYLE_SUN) {
+                    animateOffsetToPosition(mAnimateToStartPosition, false);
+                } else {
+                    ((JetRefreshView) mBaseRefreshView).setEndOfRefreshing(true);
+                    animateOffsetToPosition(mAnimateToEndPosition, true);
+                }
             }
         }
     }
