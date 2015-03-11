@@ -2,6 +2,7 @@ package com.yalantis.pulltorefresh.sample;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -80,7 +81,7 @@ public class PullToRefreshActivity extends ActionBarActivity {
         }
 
         @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
+        public View getView(final int position, View convertView, @NonNull ViewGroup parent) {
             final ViewHolder viewHolder;
             if (convertView == null) {
                 viewHolder = new ViewHolder();

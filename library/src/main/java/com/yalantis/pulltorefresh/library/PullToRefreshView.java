@@ -126,7 +126,7 @@ public class PullToRefreshView extends ViewGroup {
     }
 
     @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
+    public boolean onInterceptTouchEvent(@NonNull MotionEvent ev) {
 
         if (!isEnabled() || canChildScrollUp() || mRefreshing) {
             return false;
@@ -283,21 +283,21 @@ public class PullToRefreshView extends ViewGroup {
 
     private final Animation mAnimateToStartPosition = new Animation() {
         @Override
-        public void applyTransformation(float interpolatedTime, Transformation t) {
+        public void applyTransformation(float interpolatedTime, @NonNull Transformation t) {
             moveToStart(interpolatedTime);
         }
     };
 
     private Animation mAnimateToEndPosition = new Animation() {
         @Override
-        public void applyTransformation(float interpolatedTime, Transformation t) {
+        public void applyTransformation(float interpolatedTime, @NonNull Transformation t) {
             moveToEnd(interpolatedTime);
         }
     };
 
     private final Animation mAnimateToCorrectPosition = new Animation() {
         @Override
-        public void applyTransformation(float interpolatedTime, Transformation t) {
+        public void applyTransformation(float interpolatedTime, @NonNull Transformation t) {
             int targetTop;
             int endTarget = mTotalDragDistance;
             targetTop = (mFrom + (int) ((endTarget - mFrom) * interpolatedTime));
@@ -435,8 +435,8 @@ public class PullToRefreshView extends ViewGroup {
         mListener = listener;
     }
 
-    public static interface OnRefreshListener {
-        public void onRefresh();
+    public interface OnRefreshListener {
+        void onRefresh();
     }
 
 }
