@@ -10,8 +10,9 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Animatable;
+import android.support.annotation.NonNull;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
-import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.Transformation;
 
@@ -20,6 +21,7 @@ import com.yalantis.pulltorefresh.library.R;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Created by Apisov on 02/03/2015.
@@ -36,26 +38,41 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     private static final float CENTER_CLOUDS_INITIAL_SCALE = 0.8f;
     private static final float CENTER_CLOUDS_FINAL_SCALE = 1.30f;
 
-    private static final Interpolator DECELERATE_INTERPOLATOR = new DecelerateInterpolator();
+    private static final Interpolator ACCELERATE_DECELERATE_INTERPOLATOR = new AccelerateDecelerateInterpolator();
     public static final int LOADING_ANIMATION_COEFFICIENT = 80;
     public static final int SLOW_DOWN_ANIMATION_COEFFICIENT = 6;
+    public static final int WIND_SET_AMOUNT = 10;
+    public static final int Y_SIDE_CLOUDS_SLOW_DOWN_COF = 4;
+    public static final int X_SIDE_CLOUDS_SLOW_DOWN_COF = 2;
+    public static final int MIN_WIND_LINE_WIDTH = 50;
+    public static final int MAX_WIND_LINE_WIDTH = 300;
+    public static final int MIN_WIND_X_OFFSET = 1000;
+    public static final int MAX_WIND_X_OFFSET = 2000;
 
     private PullToRefreshView mParent;
     private Matrix mMatrix;
     private Matrix mAdditionalMatrix;
     private Animation mAnimation;
-    private Paint mWinterPaint;
 
     private int mTop;
     private int mScreenWidth;
     private boolean mInverseDirection;
 
-    //KEY: Y position, Value: X position
-    private Map<Float, Float> mWinters;
+    //KEY: Y position, Value: X offset of wind
+    private Map<Float, Float> mWinds;
+    private Paint mWindPaint;
+    private float mWindLineWidth;
+    private boolean mNewWindSet;
 
     private int mJetWidthCenter;
     private int mJetHeightCenter;
     private float mJetTopOffset;
+    private int mFrontCloudHeightCenter;
+    private int mFrontCloudWidthCenter;
+    private int mRightCloudsWidthCenter;
+    private int mRightCloudsHeightCenter;
+    private int mLeftCloudsWidthCenter;
+    private int mLeftCloudsHeightCenter;
 
     private float mPercent = 0.0f;
 
@@ -67,44 +84,49 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     private boolean isRefreshing = false;
     private boolean mEndOfRefreshing;
     private float mLoadingAnimationTime;
-    private int mFrontCloudHeightCenter;
-    private int mFrontCloudWidthCenter;
-    private float mLineWidth;
     private float mLastAnimationTime;
+
+    private Random mRandom;
 
     public JetRefreshView(Context context, PullToRefreshView parent) {
         super(context, parent);
         mParent = parent;
         mMatrix = new Matrix();
         mAdditionalMatrix = new Matrix();
-        mWinters = new HashMap<>();
+        mWinds = new HashMap<>();
+        mRandom = new Random();
+
+        mWindPaint = new Paint();
+        mWindPaint.setColor(getContext().getResources().getColor(android.R.color.white));
+        mWindPaint.setStrokeWidth(3);
+        mWindPaint.setAlpha(50);
 
         initiateDimens();
         createBitmaps();
         setupAnimations();
-        mWinterPaint = new Paint();
-        mWinterPaint.setColor(getContext().getResources().getColor(android.R.color.darker_gray));
-        mWinterPaint.setStrokeWidth(10);
-        mWinterPaint.setAlpha(125);
     }
 
     private void initiateDimens() {
         mScreenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
         mJetTopOffset = mParent.getTotalDragDistance() * 0.5f;
         mTop = -mParent.getTotalDragDistance();
-        mLineWidth = (float) (Math.random() * 100);
     }
 
     private void createBitmaps() {
         mLeftClouds = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.clouds_left);
         mRightClouds = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.clouds_right);
         mFrontClouds = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.clouds_center);
-
         mJet = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.airplane);
+
         mJetWidthCenter = mJet.getWidth() / 2;
         mJetHeightCenter = mJet.getHeight() / 2;
         mFrontCloudWidthCenter = mFrontClouds.getWidth() / 2;
         mFrontCloudHeightCenter = mFrontClouds.getHeight() / 2;
+
+        mRightCloudsWidthCenter = mRightClouds.getWidth() / 2;
+        mRightCloudsHeightCenter = mRightClouds.getHeight() / 2;
+        mLeftCloudsWidthCenter = mLeftClouds.getWidth() / 2;
+        mLeftCloudsHeightCenter = mLeftClouds.getHeight() / 2;
     }
 
     @Override
@@ -119,26 +141,57 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     }
 
     @Override
-    public void draw(Canvas canvas) {
+    public void draw(@NonNull Canvas canvas) {
         final int saveCount = canvas.save();
 
         // DRAW BACKGROUND.
         canvas.drawColor(getContext().getResources().getColor(R.color.jet_sky_background));
 
         if (isRefreshing) {
-            while (mWinters.size() < 5) {
-                float y = (float) (mParent.getTotalDragDistance() / (Math.random() * 10));
-                float x = (float) (Math.random() * 500);
-                mWinters.put(y, x);
+            // Set up new set of winter
+            while (mWinds.size() < WIND_SET_AMOUNT) {
+                float y = (float) (mParent.getTotalDragDistance() / (Math.random() * 5));
+                float x = random(MIN_WIND_X_OFFSET, MAX_WIND_X_OFFSET);
+
+                // Magic with checking interval between winds
+                if (mWinds.size() > 1) {
+                    y = 0;
+                    while (y == 0) {
+                        float tmp = (float) (mParent.getTotalDragDistance() / (Math.random() * 5));
+
+                        for (Map.Entry<Float, Float> winter : mWinds.entrySet()) {
+                            if (Math.abs(winter.getKey() - tmp) > mParent.getTotalDragDistance() / 5) {
+                                y = tmp;
+                            } else {
+                                y = 0;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                mWinds.put(y, x);
                 drawWinter(canvas, y, x);
             }
-            if (mWinters.size() >= 5) {
-                for (Map.Entry<Float, Float> winter : mWinters.entrySet()) {
+
+            // Draw current set of winter
+            if (mWinds.size() >= WIND_SET_AMOUNT) {
+                for (Map.Entry<Float, Float> winter : mWinds.entrySet()) {
                     drawWinter(canvas, winter.getKey(), winter.getValue());
                 }
             }
+
+            // We should to create new set of winds
+            if (mInverseDirection && mNewWindSet) {
+                mWinds.clear();
+                mNewWindSet = false;
+                mWindLineWidth = random(MIN_WIND_LINE_WIDTH, MAX_WIND_LINE_WIDTH);
+            }
+
+            // needed for checking direction
             mLastAnimationTime = mLoadingAnimationTime;
         }
+
         drawJet(canvas);
         drawSideClouds(canvas);
         drawCenterClouds(canvas);
@@ -147,20 +200,23 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     }
 
     private void drawWinter(Canvas canvas, float y, float xOffset) {
-        float coef = mScreenWidth / (LOADING_ANIMATION_COEFFICIENT / SLOW_DOWN_ANIMATION_COEFFICIENT);
+        float cof = (mScreenWidth + xOffset) / (LOADING_ANIMATION_COEFFICIENT / SLOW_DOWN_ANIMATION_COEFFICIENT);
         float time = mLoadingAnimationTime;
 
-        //HORRIBLE HACK FOR REVERS ANIMATION THAT SHOULD WORK LIKE RESTART ANIMATION
+        // HORRIBLE HACK FOR REVERS ANIMATION THAT SHOULD WORK LIKE RESTART ANIMATION
         if (mLastAnimationTime - mLoadingAnimationTime > 0) {
             mInverseDirection = true;
-            time = LOADING_ANIMATION_COEFFICIENT - mLoadingAnimationTime;
-//            mWinters.remove(y);
-            return;
+            // take time from 0 to end of animation time
+            time = (LOADING_ANIMATION_COEFFICIENT / SLOW_DOWN_ANIMATION_COEFFICIENT) - mLoadingAnimationTime;
+        } else {
+            mNewWindSet = true;
+            mInverseDirection = false;
         }
 
-        float x = (mScreenWidth - (time * coef)) + xOffset;
-        float xEnd = x + mLineWidth;
-        canvas.drawLine(x, y, xEnd, y, mWinterPaint);
+        float x = (mScreenWidth - (time * cof)) + xOffset - mWindLineWidth;
+        float xEnd = x + mWindLineWidth;
+
+        canvas.drawLine(x, y, xEnd, y, mWindPaint);
     }
 
     private void drawSideClouds(Canvas canvas) {
@@ -187,45 +243,44 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         }
 
         float dragYOffset = mParent.getTotalDragDistance() * (1.0f - dragPercent);
-        int startParallaxHeight = mParent.getTotalDragDistance() / 2 - mLeftClouds.getHeight() / 2;
-        boolean parallax = false;
-        if (dragYOffset < startParallaxHeight) {
-            parallax = true;
+        int cloudsVisiblePosition = mParent.getTotalDragDistance() / 2 - mLeftCloudsHeightCenter;
+        boolean needMoveCloudsWithContent = false;
+        if (dragYOffset < cloudsVisiblePosition) {
+            needMoveCloudsWithContent = true;
         }
 
         float offsetRightX = mScreenWidth - mRightClouds.getWidth();
-        float offsetRightY = (parallax
+        float offsetRightY = (needMoveCloudsWithContent
                 ? mParent.getTotalDragDistance() * dragPercent - mLeftClouds.getHeight()
                 : dragYOffset)
                 + (overdrag ? mTop : 0);
 
         float offsetLeftX = 0;
-        float offsetLeftY = (parallax
+        float offsetLeftY = (needMoveCloudsWithContent
                 ? mParent.getTotalDragDistance() * dragPercent - mLeftClouds.getHeight()
                 : dragYOffset)
                 + (overdrag ? mTop : 0);
 
-
         if (isRefreshing) {
             if (isFirstLoadingAnimationPart()) {
-                offsetLeftY += mLoadingAnimationTime / 4;
-                offsetRightX -= mLoadingAnimationTime / 2;
+                offsetLeftY += mLoadingAnimationTime / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
+                offsetRightX -= mLoadingAnimationTime / X_SIDE_CLOUDS_SLOW_DOWN_COF;
             } else if (isSecondLoadingAnimationPart()) {
-                offsetLeftY += getSecondPartAnimationValue() / 4;
-                offsetRightX -= getSecondPartAnimationValue() / 2;
+                offsetLeftY += getSecondPartAnimationValue() / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
+                offsetRightX -= getSecondPartAnimationValue() / X_SIDE_CLOUDS_SLOW_DOWN_COF;
             } else if (isThirdLoadingAnimationPart()) {
-                offsetLeftY -= getThirdAnimationPartValue() / 4;
-                offsetRightX += getThirdAnimationPartValue() / 2;
+                offsetLeftY -= getThirdAnimationPartValue() / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
+                offsetRightX += getThirdAnimationPartValue() / X_SIDE_CLOUDS_SLOW_DOWN_COF;
             } else if (isFourthLoadingAnimationPart()) {
-                offsetLeftY -= getFourthAnimationPartValue() / 2;
-                offsetRightX += getFourthAnimationPartValue() / 4;
+                offsetLeftY -= getFourthAnimationPartValue() / X_SIDE_CLOUDS_SLOW_DOWN_COF;
+                offsetRightX += getFourthAnimationPartValue() / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
             }
         }
 
-        matrixRightClouds.postScale(scale, scale, mRightClouds.getWidth() / 2, mRightClouds.getHeight() / 2);
+        matrixRightClouds.postScale(scale, scale, mRightCloudsWidthCenter, mRightCloudsHeightCenter);
         matrixRightClouds.postTranslate(offsetRightX, offsetRightY);
 
-        matrixLeftClouds.postScale(scale, scale, mLeftClouds.getWidth() / 2, mLeftClouds.getHeight() / 2);
+        matrixLeftClouds.postScale(scale, scale, mLeftCloudsWidthCenter, mLeftCloudsHeightCenter);
         matrixLeftClouds.postTranslate(offsetLeftX, offsetLeftY);
 
         canvas.drawBitmap(mLeftClouds, matrixLeftClouds, null);
@@ -287,6 +342,7 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
                 sy = sx;
             }
         }
+
         matrix.postScale(sx, sy, mFrontCloudWidthCenter, mFrontCloudHeightCenter);
         matrix.postTranslate(offsetX, offsetY);
 
@@ -302,7 +358,7 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
 
         // Check overdrag
         if (dragPercent > 1.0f && !mEndOfRefreshing) {
-            rotateAngle = dragPercent % 1 * 10;
+            rotateAngle = (dragPercent % 1) * 10;
             dragPercent = 1.0f;
         }
 
@@ -332,6 +388,13 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         }
 
         canvas.drawBitmap(mJet, matrix, null);
+    }
+
+    public float random(int min, int max) {
+
+        // nextInt is normally exclusive of the top value,
+        // so add 1 to make it inclusive
+        return mRandom.nextInt((max - min) + 1) + min;
     }
 
     private float getFourthAnimationPartValue() {
@@ -387,18 +450,16 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     }
 
     @Override
-    protected void onBoundsChange(Rect bounds) {
+    protected void onBoundsChange(@NonNull Rect bounds) {
         super.onBoundsChange(bounds);
     }
 
     @Override
     public void setAlpha(int alpha) {
-
     }
 
     @Override
     public void setColorFilter(ColorFilter colorFilter) {
-
     }
 
     @Override
@@ -416,6 +477,9 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         mAnimation.reset();
         isRefreshing = true;
         mParent.startAnimation(mAnimation);
+        mLastAnimationTime = 0;
+        mWinds.clear();
+        mWindLineWidth = random(MIN_WIND_LINE_WIDTH, MAX_WIND_LINE_WIDTH);
     }
 
     @Override
@@ -429,13 +493,13 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     private void setupAnimations() {
         mAnimation = new Animation() {
             @Override
-            public void applyTransformation(float interpolatedTime, Transformation t) {
+            public void applyTransformation(float interpolatedTime, @NonNull Transformation t) {
                 setLoadingAnimationTime(interpolatedTime);
             }
         };
         mAnimation.setRepeatCount(Animation.INFINITE);
         mAnimation.setRepeatMode(Animation.REVERSE);
-        mAnimation.setInterpolator(DECELERATE_INTERPOLATOR);
+        mAnimation.setInterpolator(ACCELERATE_DECELERATE_INTERPOLATOR);
         mAnimation.setDuration(ANIMATION_DURATION);
     }
 
