@@ -2,5 +2,8 @@
 <resources>
 
     <string name="app_name">Pull to Refresh</string>
+    <string name="sun_refresh_style">Sun refresh style</string>
+    <string name="jet_refresh_style">Jet refresh style</string>
+    <string name="polite_message">Wait a moment please. Breathe deeply and watch beautiful animation.</string>
 
 </resources>
