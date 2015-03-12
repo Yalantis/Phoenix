@@ -1,18 +1,20 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "21.1.2"
+    compileSdkVersion 22
+    buildToolsVersion "22"
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 21
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion 9
+        targetSdkVersion 22
+        versionCode 2
+        versionName "1.1"
     }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:support-v4:21.0.3'
+    compile 'com.android.support:support-v4:22.0.0'
 }
+
+apply from: '../mavenpush.gradle'

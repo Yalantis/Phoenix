@@ -9,13 +9,17 @@ Check this [project on Behance] (https://www.behance.net/gallery/20411445/Mobile
 
 <img src="https://d13yacurqjgara.cloudfront.net/users/125056/screenshots/1650317/realestate-pull_1-2-3.gif" alt="alt text" style="width:200;height:200">
 
+Check this [project on Dribbble] (https://dribbble.com/shots/1623131-Pull-to-Refresh)
+
+<img src="https://d13yacurqjgara.cloudfront.net/users/125056/screenshots/1623131/tours-pull-airplane_2-2-3.gif" alt="alt text" style="width:200;height:200">
+
 #Usage
 
 *For a working implementation, Have a look at the Sample Project - sample*
 
 1. Include the library as local library project.
 
-    ``` compile 'com.yalantis:pulltorefresh:1.0.0' ```
+    ``` compile 'com.yalantis:pulltorefresh:1.1.0' ```
 
 2. Include the PullToRefreshView widget in your layout.
 
@@ -23,7 +27,8 @@ Check this [project on Behance] (https://www.behance.net/gallery/20411445/Mobile
     <com.yalantis.pulltorefresh.library.PullToRefreshView
         android:id="@+id/pull_to_refresh"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        app:type="sun">
 
         <ListView
             android:id="@+id/list_view"
@@ -70,9 +75,14 @@ If you need to change progress state:
 ```
 #Compatibility
   
-  * Android Jelly Bean 4.1+
+  * Android GINGERBREAD 2.3+
   
 # Changelog
+
+### Version: 1.1
+
+  * Added Jet pull-to-refresh type
+  * Min SDK version changed to 9 (from 16)
 
 ### Version: 1.0
 
