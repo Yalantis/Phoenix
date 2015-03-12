@@ -32,6 +32,7 @@ public class PullToRefreshView extends ViewGroup {
 
     public static final int STYLE_SUN = 0;
     public static final int STYLE_JET = 1;
+
     public static final int MAX_OFFSET_ANIMATION_DURATION = 700;
     public static final int MAX_OFFSET_JET_END_ANIMATION_DURATION = 400;
     public static final int MAX_JET_RESTORE_ANIMATION_DURATION = 2350;
@@ -80,7 +81,12 @@ public class PullToRefreshView extends ViewGroup {
         ViewCompat.setChildrenDrawingOrderEnabled(this, true);
     }
 
-    public void setRefreshStyle() {
+    public void setRefreshType(int type) {
+        mRefreshViewType = type;
+        setRefreshStyle();
+    }
+
+    private void setRefreshStyle() {
         setRefreshing(false);
         switch (mRefreshViewType) {
             case STYLE_SUN:
