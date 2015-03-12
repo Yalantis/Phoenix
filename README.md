@@ -19,7 +19,7 @@ Check this [project on Dribbble] (https://dribbble.com/shots/1623131-Pull-to-Ref
 
 1. Include the library as local library project.
 
-    ``` compile 'com.yalantis:pulltorefresh:1.0.0' ```
+    ``` compile 'com.yalantis:pulltorefresh:1.1.0' ```
 
 2. Include the PullToRefreshView widget in your layout.
 
@@ -27,7 +27,8 @@ Check this [project on Dribbble] (https://dribbble.com/shots/1623131-Pull-to-Ref
     <com.yalantis.pulltorefresh.library.PullToRefreshView
         android:id="@+id/pull_to_refresh"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        app:type="sun">
 
         <ListView
             android:id="@+id/list_view"
@@ -74,9 +75,14 @@ If you need to change progress state:
 ```
 #Compatibility
   
-  * Android Jelly Bean 4.1+
+  * Android GINGERBREAD 2.3+
   
 # Changelog
+
+### Version: 1.1
+
+  * Added Jet pull-to-refresh type
+  * Min SDK version changed to 9 (from 16)
 
 ### Version: 1.0
 

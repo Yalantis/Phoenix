@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.yalantis.pulltorefresh.sample"
-        minSdkVersion 16
+        minSdkVersion 9
         targetSdkVersion 22
         versionCode 2
         versionName "1.1"
