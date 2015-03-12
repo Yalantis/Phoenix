@@ -260,9 +260,7 @@ public class PullToRefreshView extends ViewGroup {
         mFromDragPercent = mCurrentDragPercent;
 
         mAnimateToCorrectPosition.reset();
-        mAnimateToCorrectPosition.setDuration(mRefreshViewType == STYLE_SUN
-                ? MAX_OFFSET_ANIMATION_DURATION
-                : MAX_JET_RESTORE_ANIMATION_DURATION);
+        mAnimateToCorrectPosition.setDuration(getDurationForRestoreAnimation());
         mAnimateToCorrectPosition.setInterpolator(mDecelerateInterpolator);
         mRefreshView.clearAnimation();
         mRefreshView.startAnimation(mAnimateToCorrectPosition);
@@ -279,6 +277,25 @@ public class PullToRefreshView extends ViewGroup {
             animateOffsetToPosition(mAnimateToStartPosition, false);
         }
         mCurrentOffsetTop = mTarget.getTop();
+    }
+
+    /**
+     * Depends on different styles of refresh we should return restore animation time
+     *
+     * @return - animation duration
+     */
+    private int getDurationForRestoreAnimation() {
+        switch (mRefreshViewType) {
+            case STYLE_SUN: {
+                return MAX_OFFSET_ANIMATION_DURATION;
+            }
+            case STYLE_JET: {
+                return MAX_JET_RESTORE_ANIMATION_DURATION;
+            }
+            default: {
+                return MAX_OFFSET_ANIMATION_DURATION;
+            }
+        }
     }
 
     private final Animation mAnimateToStartPosition = new Animation() {
@@ -346,11 +363,15 @@ public class PullToRefreshView extends ViewGroup {
                 mBaseRefreshView.setPercent(1f, true);
                 animateOffsetToCorrectPosition();
             } else {
-                if (mRefreshViewType == STYLE_SUN) {
-                    animateOffsetToPosition(mAnimateToStartPosition, false);
-                } else {
-                    ((JetRefreshView) mBaseRefreshView).setEndOfRefreshing(true);
-                    animateOffsetToPosition(mAnimateToEndPosition, true);
+                switch (mRefreshViewType) {
+                    case STYLE_SUN: {
+                        animateOffsetToPosition(mAnimateToStartPosition, false);
+                        break;
+                    }
+                    case STYLE_JET: {
+                        ((JetRefreshView) mBaseRefreshView).setEndOfRefreshing(true);
+                        animateOffsetToPosition(mAnimateToEndPosition, true);
+                    }
                 }
             }
         }

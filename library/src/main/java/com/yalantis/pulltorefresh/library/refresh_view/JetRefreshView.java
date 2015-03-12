@@ -39,8 +39,11 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     private static final float CENTER_CLOUDS_FINAL_SCALE = 1.30f;
 
     private static final Interpolator ACCELERATE_DECELERATE_INTERPOLATOR = new AccelerateDecelerateInterpolator();
+
+    // Multiply with this animation interpolator time
     public static final int LOADING_ANIMATION_COEFFICIENT = 80;
     public static final int SLOW_DOWN_ANIMATION_COEFFICIENT = 6;
+    // Amount of lines when is going lading animation
     public static final int WIND_SET_AMOUNT = 10;
     public static final int Y_SIDE_CLOUDS_SLOW_DOWN_COF = 4;
     public static final int X_SIDE_CLOUDS_SLOW_DOWN_COF = 2;
@@ -148,7 +151,7 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         canvas.drawColor(getContext().getResources().getColor(R.color.jet_sky_background));
 
         if (isRefreshing) {
-            // Set up new set of winter
+            // Set up new set of wind
             while (mWinds.size() < WIND_SET_AMOUNT) {
                 float y = (float) (mParent.getTotalDragDistance() / (Math.random() * 5));
                 float x = random(MIN_WIND_X_OFFSET, MAX_WIND_X_OFFSET);
@@ -159,8 +162,9 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
                     while (y == 0) {
                         float tmp = (float) (mParent.getTotalDragDistance() / (Math.random() * 5));
 
-                        for (Map.Entry<Float, Float> winter : mWinds.entrySet()) {
-                            if (Math.abs(winter.getKey() - tmp) > mParent.getTotalDragDistance() / 5) {
+                        for (Map.Entry<Float, Float> wind : mWinds.entrySet()) {
+                            // We want that interval will be greater than fifth part of draggable distance
+                            if (Math.abs(wind.getKey() - tmp) > mParent.getTotalDragDistance() / 5) {
                                 y = tmp;
                             } else {
                                 y = 0;
@@ -171,13 +175,13 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
                 }
 
                 mWinds.put(y, x);
-                drawWinter(canvas, y, x);
+                drawWind(canvas, y, x);
             }
 
-            // Draw current set of winter
+            // Draw current set of wind
             if (mWinds.size() >= WIND_SET_AMOUNT) {
-                for (Map.Entry<Float, Float> winter : mWinds.entrySet()) {
-                    drawWinter(canvas, winter.getKey(), winter.getValue());
+                for (Map.Entry<Float, Float> wind : mWinds.entrySet()) {
+                    drawWind(canvas, wind.getKey(), wind.getValue());
                 }
             }
 
@@ -199,7 +203,18 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         canvas.restoreToCount(saveCount);
     }
 
-    private void drawWinter(Canvas canvas, float y, float xOffset) {
+    /**
+     * Draw wind on loading animation
+     *
+     * @param canvas  - area where we will draw
+     * @param y       - y position fot one of lines
+     * @param xOffset - x offset for on of lines
+     */
+    private void drawWind(Canvas canvas, float y, float xOffset) {
+        /* We should multiply current animation time with this coefficient for taking all screen width in time
+        Removing slowing of animation with dividing on {@LINK #SLOW_DOWN_ANIMATION_COEFFICIENT}
+        And we should don't forget about distance that should "fly" line that depend on screen of device and x offset
+        */
         float cof = (mScreenWidth + xOffset) / (LOADING_ANIMATION_COEFFICIENT / SLOW_DOWN_ANIMATION_COEFFICIENT);
         float time = mLoadingAnimationTime;
 
@@ -213,6 +228,8 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
             mInverseDirection = false;
         }
 
+        // Taking current x position of drawing wind
+        // For fully disappearing of line we should subtract wind line width
         float x = (mScreenWidth - (time * cof)) + xOffset - mWindLineWidth;
         float xEnd = x + mWindLineWidth;
 
@@ -225,10 +242,12 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         matrixLeftClouds.reset();
         matrixRightClouds.reset();
 
+        // Drag percent will newer get more then 1 here
         float dragPercent = Math.min(1f, Math.abs(mPercent));
 
         boolean overdrag = false;
 
+        // But we check here for overdrag
         if (mPercent > 1.0f) {
             overdrag = true;
         }
@@ -242,8 +261,12 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
             scale = SIDE_CLOUDS_INITIAL_SCALE;
         }
 
+        // Current y position of clouds
         float dragYOffset = mParent.getTotalDragDistance() * (1.0f - dragPercent);
+
+        // Position where clouds fully visible on screen and we should drag them with content of listView
         int cloudsVisiblePosition = mParent.getTotalDragDistance() / 2 - mLeftCloudsHeightCenter;
+
         boolean needMoveCloudsWithContent = false;
         if (dragYOffset < cloudsVisiblePosition) {
             needMoveCloudsWithContent = true;
@@ -261,19 +284,20 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
                 : dragYOffset)
                 + (overdrag ? mTop : 0);
 
+        // Magic with animation on loading process
         if (isRefreshing) {
-            if (isFirstLoadingAnimationPart()) {
-                offsetLeftY += mLoadingAnimationTime / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
-                offsetRightX -= mLoadingAnimationTime / X_SIDE_CLOUDS_SLOW_DOWN_COF;
-            } else if (isSecondLoadingAnimationPart()) {
-                offsetLeftY += getSecondPartAnimationValue() / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
-                offsetRightX -= getSecondPartAnimationValue() / X_SIDE_CLOUDS_SLOW_DOWN_COF;
-            } else if (isThirdLoadingAnimationPart()) {
-                offsetLeftY -= getThirdAnimationPartValue() / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
-                offsetRightX += getThirdAnimationPartValue() / X_SIDE_CLOUDS_SLOW_DOWN_COF;
-            } else if (isFourthLoadingAnimationPart()) {
-                offsetLeftY -= getFourthAnimationPartValue() / X_SIDE_CLOUDS_SLOW_DOWN_COF;
-                offsetRightX += getFourthAnimationPartValue() / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
+            if (checkCurrentAnimationPart(AnimationPart.FIRST)) {
+                offsetLeftY += getAnimationPartValue(AnimationPart.FIRST) / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
+                offsetRightX -= getAnimationPartValue(AnimationPart.FIRST) / X_SIDE_CLOUDS_SLOW_DOWN_COF;
+            } else if (checkCurrentAnimationPart(AnimationPart.SECOND)) {
+                offsetLeftY += getAnimationPartValue(AnimationPart.SECOND) / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
+                offsetRightX -= getAnimationPartValue(AnimationPart.SECOND) / X_SIDE_CLOUDS_SLOW_DOWN_COF;
+            } else if (checkCurrentAnimationPart(AnimationPart.THIRD)) {
+                offsetLeftY -= getAnimationPartValue(AnimationPart.THIRD) / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
+                offsetRightX += getAnimationPartValue(AnimationPart.THIRD) / X_SIDE_CLOUDS_SLOW_DOWN_COF;
+            } else if (checkCurrentAnimationPart(AnimationPart.FOURTH)) {
+                offsetLeftY -= getAnimationPartValue(AnimationPart.FOURTH) / X_SIDE_CLOUDS_SLOW_DOWN_COF;
+                offsetRightX += getAnimationPartValue(AnimationPart.FOURTH) / Y_SIDE_CLOUDS_SLOW_DOWN_COF;
             }
         }
 
@@ -298,6 +322,7 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
 
         if (mPercent > 1.0f) {
             overdrag = true;
+            // Here we want know about how mach percent of over drag we done
             overdragPercent = Math.abs(1.0f - mPercent);
         }
 
@@ -311,7 +336,9 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
 
         float parallaxPercent = 0;
         boolean parallax = false;
+        // Current y position of clouds
         float dragYOffset = mParent.getTotalDragDistance() * dragPercent;
+        // Position when should start parallax scrolling
         int startParallaxHeight = mParent.getTotalDragDistance() - mFrontCloudHeightCenter;
 
         if (dragYOffset > startParallaxHeight) {
@@ -328,19 +355,16 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         float sy = overdrag ? scale + overdragPercent / 2 : scale;
 
         if (isRefreshing && !overdrag) {
-            if (isFirstLoadingAnimationPart()) {
-                sx = scale - (mLoadingAnimationTime / LOADING_ANIMATION_COEFFICIENT) / 8;
-                sy = sx;
-            } else if (isSecondLoadingAnimationPart()) {
-                sx = scale - (getSecondPartAnimationValue() / LOADING_ANIMATION_COEFFICIENT) / 8;
-                sy = sx;
-            } else if (isThirdLoadingAnimationPart()) {
-                sx = scale + (getThirdAnimationPartValue() / LOADING_ANIMATION_COEFFICIENT) / 6;
-                sy = sx;
-            } else if (isFourthLoadingAnimationPart()) {
-                sx = scale + (getFourthAnimationPartValue() / LOADING_ANIMATION_COEFFICIENT) / 6;
-                sy = sx;
+            if (checkCurrentAnimationPart(AnimationPart.FIRST)) {
+                sx = scale - (getAnimationPartValue(AnimationPart.FIRST) / LOADING_ANIMATION_COEFFICIENT) / 8;
+            } else if (checkCurrentAnimationPart(AnimationPart.SECOND)) {
+                sx = scale - (getAnimationPartValue(AnimationPart.SECOND) / LOADING_ANIMATION_COEFFICIENT) / 8;
+            } else if (checkCurrentAnimationPart(AnimationPart.THIRD)) {
+                sx = scale + (getAnimationPartValue(AnimationPart.THIRD) / LOADING_ANIMATION_COEFFICIENT) / 6;
+            } else if (checkCurrentAnimationPart(AnimationPart.FOURTH)) {
+                sx = scale + (getAnimationPartValue(AnimationPart.FOURTH) / LOADING_ANIMATION_COEFFICIENT) / 6;
             }
+            sy = sx;
         }
 
         matrix.postScale(sx, sy, mFrontCloudWidthCenter, mFrontCloudHeightCenter);
@@ -370,14 +394,14 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
                 - mJetHeightCenter;
 
         if (isRefreshing) {
-            if (isFirstLoadingAnimationPart()) {
-                offsetY -= mLoadingAnimationTime;
-            } else if (isSecondLoadingAnimationPart()) {
-                offsetY -= getSecondPartAnimationValue();
-            } else if (isThirdLoadingAnimationPart()) {
-                offsetY += getThirdAnimationPartValue();
-            } else if (isFourthLoadingAnimationPart()) {
-                offsetY += getFourthAnimationPartValue();
+            if (checkCurrentAnimationPart(AnimationPart.FIRST)) {
+                offsetY -= getAnimationPartValue(AnimationPart.FIRST);
+            } else if (checkCurrentAnimationPart(AnimationPart.SECOND)) {
+                offsetY -= getAnimationPartValue(AnimationPart.SECOND);
+            } else if (checkCurrentAnimationPart(AnimationPart.THIRD)) {
+                offsetY += getAnimationPartValue(AnimationPart.THIRD);
+            } else if (checkCurrentAnimationPart(AnimationPart.FOURTH)) {
+                offsetY += getAnimationPartValue(AnimationPart.FOURTH);
             }
         }
 
@@ -397,46 +421,83 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         return mRandom.nextInt((max - min) + 1) + min;
     }
 
-    private float getFourthAnimationPartValue() {
-        return getThirdTimeAnimationPart() - (mLoadingAnimationTime - getFourthTimeAnimationPart());
+    /**
+     * We need a special value for different part of animation
+     *
+     * @param part - needed part
+     * @return - value for needed part
+     */
+    private float getAnimationPartValue(AnimationPart part) {
+        switch (part) {
+            case FIRST: {
+                return mLoadingAnimationTime;
+            }
+            case SECOND: {
+                return getAnimationTimePart(AnimationPart.FOURTH) - (mLoadingAnimationTime - getAnimationTimePart(AnimationPart.FOURTH));
+            }
+            case THIRD: {
+                return mLoadingAnimationTime - getAnimationTimePart(AnimationPart.SECOND);
+            }
+            case FOURTH: {
+                return getAnimationTimePart(AnimationPart.THIRD) - (mLoadingAnimationTime - getAnimationTimePart(AnimationPart.FOURTH));
+            }
+            default:
+                return 0;
+        }
     }
 
-    private float getThirdAnimationPartValue() {
-        return mLoadingAnimationTime - getSecondTimeAnimationPart();
+    /**
+     * On drawing we should check current part of animation
+     * @param part - needed part of animation
+     * @return - return true if current part
+     */
+    private boolean checkCurrentAnimationPart(AnimationPart part) {
+        switch (part) {
+            case FIRST: {
+                return mLoadingAnimationTime < getAnimationTimePart(AnimationPart.FOURTH);
+            }
+            case SECOND: {
+                return mLoadingAnimationTime < getAnimationTimePart(AnimationPart.SECOND);
+            }
+            case THIRD: {
+                return mLoadingAnimationTime < getAnimationTimePart(AnimationPart.THIRD);
+            }
+            case FOURTH: {
+                return mLoadingAnimationTime > getAnimationTimePart(AnimationPart.THIRD);
+            }
+            default:
+                return false;
+        }
     }
 
-    private int getSecondTimeAnimationPart() {
-        return LOADING_ANIMATION_COEFFICIENT / 2;
+    /**
+     * Get part of animation duration
+     *
+     * @param part - needed part of time
+     * @return - interval of time
+     */
+    private int getAnimationTimePart(AnimationPart part) {
+        switch (part) {
+            case SECOND: {
+                return LOADING_ANIMATION_COEFFICIENT / 2;
+            }
+            case THIRD: {
+                return getAnimationTimePart(AnimationPart.FOURTH) * 3;
+            }
+            case FOURTH: {
+                return LOADING_ANIMATION_COEFFICIENT / 4;
+            }
+            default:
+                return 0;
+        }
     }
 
-    private int getThirdTimeAnimationPart() {
-        return getFourthTimeAnimationPart() * 3;
-    }
-
-    private boolean isFourthLoadingAnimationPart() {
-        return mLoadingAnimationTime > getThirdTimeAnimationPart();
-    }
-
-    private boolean isThirdLoadingAnimationPart() {
-        return mLoadingAnimationTime < getThirdTimeAnimationPart();
-    }
-
-    private boolean isSecondLoadingAnimationPart() {
-        return mLoadingAnimationTime < getSecondTimeAnimationPart();
-    }
-
-    private float getSecondPartAnimationValue() {
-        return getFourthTimeAnimationPart() - (mLoadingAnimationTime - getFourthTimeAnimationPart());
-    }
-
-    private boolean isFirstLoadingAnimationPart() {
-        return mLoadingAnimationTime < getFourthTimeAnimationPart();
-    }
-
-    private int getFourthTimeAnimationPart() {
-        return LOADING_ANIMATION_COEFFICIENT / 4;
-    }
-
+    /**
+     * Our animation depend on type of current work of refreshing.
+     * We should to do different things when it's end of refreshing
+     *
+     * @param endOfRefreshing - we will check current state of refresh with this
+     */
     public void setEndOfRefreshing(boolean endOfRefreshing) {
         mEndOfRefreshing = endOfRefreshing;
     }
