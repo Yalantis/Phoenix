@@ -375,7 +375,7 @@ public class PullToRefreshView extends ViewGroup {
                         break;
                     }
                     case STYLE_JET: {
-                        ((JetRefreshView) mBaseRefreshView).setEndOfRefreshing(true);
+                        mBaseRefreshView.setEndOfRefreshing(true);
                         animateOffsetToPosition(mAnimateToEndPosition, true);
                     }
                 }

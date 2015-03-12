@@ -51,6 +51,7 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
     public static final int MAX_WIND_LINE_WIDTH = 300;
     public static final int MIN_WIND_X_OFFSET = 1000;
     public static final int MAX_WIND_X_OFFSET = 2000;
+    public static final int RANDOM_Y_COEFFICIENT = 5;
 
     private PullToRefreshView mParent;
     private Matrix mMatrix;
@@ -153,18 +154,18 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
         if (isRefreshing) {
             // Set up new set of wind
             while (mWinds.size() < WIND_SET_AMOUNT) {
-                float y = (float) (mParent.getTotalDragDistance() / (Math.random() * 5));
+                float y = (float) (mParent.getTotalDragDistance() / (Math.random() * RANDOM_Y_COEFFICIENT));
                 float x = random(MIN_WIND_X_OFFSET, MAX_WIND_X_OFFSET);
 
                 // Magic with checking interval between winds
                 if (mWinds.size() > 1) {
                     y = 0;
                     while (y == 0) {
-                        float tmp = (float) (mParent.getTotalDragDistance() / (Math.random() * 5));
+                        float tmp = (float) (mParent.getTotalDragDistance() / (Math.random() * RANDOM_Y_COEFFICIENT));
 
                         for (Map.Entry<Float, Float> wind : mWinds.entrySet()) {
                             // We want that interval will be greater than fifth part of draggable distance
-                            if (Math.abs(wind.getKey() - tmp) > mParent.getTotalDragDistance() / 5) {
+                            if (Math.abs(wind.getKey() - tmp) > mParent.getTotalDragDistance() / RANDOM_Y_COEFFICIENT) {
                                 y = tmp;
                             } else {
                                 y = 0;
@@ -448,6 +449,7 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
 
     /**
      * On drawing we should check current part of animation
+     *
      * @param part - needed part of animation
      * @return - return true if current part
      */
@@ -456,11 +458,9 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
             case FIRST: {
                 return mLoadingAnimationTime < getAnimationTimePart(AnimationPart.FOURTH);
             }
-            case SECOND: {
-                return mLoadingAnimationTime < getAnimationTimePart(AnimationPart.SECOND);
-            }
+            case SECOND:
             case THIRD: {
-                return mLoadingAnimationTime < getAnimationTimePart(AnimationPart.THIRD);
+                return mLoadingAnimationTime < getAnimationTimePart(part);
             }
             case FOURTH: {
                 return mLoadingAnimationTime > getAnimationTimePart(AnimationPart.THIRD);
@@ -490,16 +490,6 @@ public class JetRefreshView extends BaseRefreshView implements Animatable {
             default:
                 return 0;
         }
-    }
-
-    /**
-     * Our animation depend on type of current work of refreshing.
-     * We should to do different things when it's end of refreshing
-     *
-     * @param endOfRefreshing - we will check current state of refresh with this
-     */
-    public void setEndOfRefreshing(boolean endOfRefreshing) {
-        mEndOfRefreshing = endOfRefreshing;
     }
 
     public void setPercent(float percent) {
