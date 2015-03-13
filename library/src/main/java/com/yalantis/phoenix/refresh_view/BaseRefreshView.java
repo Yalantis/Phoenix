@@ -1,4 +1,4 @@
-package com.yalantis.pulltorefresh.library.refresh_view;
+package com.yalantis.phoenix.refresh_view;
 
 import android.content.Context;
 import android.graphics.ColorFilter;
@@ -7,7 +7,7 @@ import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 
-import com.yalantis.pulltorefresh.library.PullToRefreshView;
+import com.yalantis.phoenix.PullToRefreshView;
 
 public abstract class BaseRefreshView extends Drawable implements Drawable.Callback, Animatable {
 

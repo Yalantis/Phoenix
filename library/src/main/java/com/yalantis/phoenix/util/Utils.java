@@ -1,4 +1,4 @@
-package com.yalantis.pulltorefresh.library.util;
+package com.yalantis.phoenix.util;
 
 import android.content.Context;
 
