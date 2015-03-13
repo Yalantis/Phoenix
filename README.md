@@ -1,4 +1,4 @@
-# Pull-to-Refresh.Rentals-Android
+# Phoenix Pull-to-Refresh
 
 This project aims to provide a simple and customizable pull to refresh implementation. Made in [Yalantis] (http://yalantis.com/)
 
