@@ -1,10 +1,10 @@
-package com.yalantis.pulltorefresh.library.util;
+package com.yalantis.phoenix.util;
 
 import android.text.TextUtils;
 
 public final class Logger {
 
-    private static final String TAG = "PullToRefresh";
+    private static final String TAG = "Phoenix";
 
     /**
      * Set true or false if you want read logs or not
