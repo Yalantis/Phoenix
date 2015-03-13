@@ -16,5 +16,3 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:support-v4:22.0.0'
 }
-
-apply from: '../mavenpush.gradle'
