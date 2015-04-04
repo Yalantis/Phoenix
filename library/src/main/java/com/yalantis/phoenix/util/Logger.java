@@ -9,18 +9,18 @@ public final class Logger {
     /**
      * Set true or false if you want read logs or not
      */
-    private static boolean logEnabled_v = false;
+    private static boolean logEnabled_d = false;
     private static boolean logEnabled_i = false;
     private static boolean logEnabled_e = false;
 
     public static void d() {
-        if (logEnabled_v) {
+        if (logEnabled_d) {
             android.util.Log.v(TAG, getLocation());
         }
     }
 
     public static void d(String msg) {
-        if (logEnabled_v) {
+        if (logEnabled_d) {
             android.util.Log.v(TAG, getLocation() + msg);
         }
     }

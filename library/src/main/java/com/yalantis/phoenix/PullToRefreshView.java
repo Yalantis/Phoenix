@@ -19,6 +19,7 @@ import android.widget.ImageView;
 
 import com.yalantis.phoenix.refresh_view.BaseRefreshView;
 import com.yalantis.phoenix.refresh_view.SunRefreshView;
+import com.yalantis.phoenix.util.Logger;
 import com.yalantis.phoenix.util.Utils;
 
 import java.security.InvalidParameterException;
@@ -265,6 +266,7 @@ public class PullToRefreshView extends ViewGroup {
             animateOffsetToStartPosition();
         }
         mCurrentOffsetTop = mTarget.getTop();
+        mTarget.setPadding(0, 0, 0, mTotalDragDistance);
     }
 
     private final Animation mAnimateToStartPosition = new Animation() {
@@ -296,6 +298,7 @@ public class PullToRefreshView extends ViewGroup {
 
         mCurrentDragPercent = targetPercent;
         mBaseRefreshView.setPercent(mCurrentDragPercent, true);
+        mTarget.setPadding(0, 0, 0, targetTop);
         setTargetOffsetTop(offset, false);
     }
 
