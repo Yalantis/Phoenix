@@ -16,6 +16,7 @@ import android.view.animation.Transformation;
 
 import com.yalantis.phoenix.PullToRefreshView;
 import com.yalantis.phoenix.R;
+import com.yalantis.phoenix.util.Logger;
 import com.yalantis.phoenix.util.Utils;
 
 /**
@@ -69,18 +70,24 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
 
     private boolean isRefreshing = false;
 
-    public SunRefreshView(Context context, PullToRefreshView parent) {
+    public SunRefreshView(Context context, final PullToRefreshView parent) {
         super(context, parent);
         mParent = parent;
         mMatrix = new Matrix();
 
-        initiateDimens();
-        createBitmaps();
         setupAnimations();
+        parent.post(new Runnable() {
+            @Override
+            public void run() {
+                initiateDimens(parent.getWidth());
+            }
+        });
     }
 
-    private void initiateDimens() {
-        mScreenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
+    public void initiateDimens(int viewWidth) {
+        if (viewWidth <= 0 || viewWidth == mScreenWidth) return;
+
+        mScreenWidth = viewWidth;
         mSkyHeight = (int) (SKY_RATIO * mScreenWidth);
         mSkyTopOffset = (mSkyHeight * 0.38f);
         mSkyMoveOffset = Utils.convertDpToPixel(getContext(), 15);
@@ -94,6 +101,8 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
         mSunTopOffset = (mParent.getTotalDragDistance() * 0.1f);
 
         mTop = -mParent.getTotalDragDistance();
+
+        createBitmaps();
     }
 
     private void createBitmaps() {
@@ -119,6 +128,8 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
 
     @Override
     public void draw(Canvas canvas) {
+        if (mScreenWidth <= 0) return;
+
         final int saveCount = canvas.save();
         canvas.translate(0, mTop);
 
