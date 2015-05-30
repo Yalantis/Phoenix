@@ -1,107 +1,68 @@
 package com.yalantis.phoenix.sample;
 
-import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v7.app.ActionBarActivity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
-import android.widget.ListView;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 
-import com.yalantis.phoenix.PullToRefreshView;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-public class PullToRefreshActivity extends ActionBarActivity {
-
-    public static final int REFRESH_DELAY = 2000;
-
-    private PullToRefreshView mPullToRefreshView;
+/**
+ * Created by Oleksii Shliama.
+ */
+public class PullToRefreshActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pull_to_refresh);
 
-        Map<String, Integer> map;
-        List<Map<String, Integer>> sampleList = new ArrayList<>();
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+        ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
 
-        int[] icons = {
-                R.drawable.icon_1,
-                R.drawable.icon_2,
-                R.drawable.icon_3};
-
-        int[] colors = {
-                R.color.saffron,
-                R.color.eggplant,
-                R.color.sienna};
-
-        for (int i = 0; i < icons.length; i++) {
-            map = new HashMap<>();
-            map.put(SampleAdapter.KEY_ICON, icons[i]);
-            map.put(SampleAdapter.KEY_COLOR, colors[i]);
-            sampleList.add(map);
+        if (toolbar != null) {
+            setSupportActionBar(toolbar);
         }
 
-        ListView listView = (ListView) findViewById(R.id.list_view);
-        listView.setAdapter(new SampleAdapter(this, R.layout.list_item, sampleList));
-
-        mPullToRefreshView = (PullToRefreshView) findViewById(R.id.pull_to_refresh);
-        mPullToRefreshView.setOnRefreshListener(new PullToRefreshView.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                mPullToRefreshView.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mPullToRefreshView.setRefreshing(false);
-                    }
-                }, REFRESH_DELAY);
-            }
-        });
+        viewPager.setAdapter(new SectionPagerAdapter(getSupportFragmentManager()));
+        tabLayout.setupWithViewPager(viewPager);
     }
 
-    class SampleAdapter extends ArrayAdapter<Map<String, Integer>> {
+    public class SectionPagerAdapter extends FragmentPagerAdapter {
 
-        public static final String KEY_ICON = "icon";
-        public static final String KEY_COLOR = "color";
-
-        private final LayoutInflater mInflater;
-        private final List<Map<String, Integer>> mData;
-
-        public SampleAdapter(Context context, int layoutResourceId, List<Map<String, Integer>> data) {
-            super(context, layoutResourceId, data);
-            mData = data;
-            mInflater = LayoutInflater.from(context);
+        public SectionPagerAdapter(FragmentManager fm) {
+            super(fm);
         }
 
         @Override
-        public View getView(final int position, View convertView, @NonNull ViewGroup parent) {
-            final ViewHolder viewHolder;
-            if (convertView == null) {
-                viewHolder = new ViewHolder();
-                convertView = mInflater.inflate(R.layout.list_item, parent, false);
-                viewHolder.imageViewIcon = (ImageView) convertView.findViewById(R.id.image_view_icon);
-                convertView.setTag(viewHolder);
-            } else {
-                viewHolder = (ViewHolder) convertView.getTag();
+        public Fragment getItem(int position) {
+            switch (position) {
+                case 0:
+                    return new ListViewFragment();
+                case 1:
+                default:
+                    return new RecyclerViewFragment();
             }
-
-            viewHolder.imageViewIcon.setImageResource(mData.get(position).get(KEY_ICON));
-            convertView.setBackgroundResource(mData.get(position).get(KEY_COLOR));
-
-            return convertView;
         }
 
-        class ViewHolder {
-            ImageView imageViewIcon;
+        @Override
+        public int getCount() {
+            return 2;
         }
 
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
+                case 0:
+                    return "ListView";
+                case 1:
+                default:
+                    return "RecyclerView";
+            }
+        }
     }
 
 }

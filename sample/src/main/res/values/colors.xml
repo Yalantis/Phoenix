@@ -3,4 +3,8 @@
     <color name="saffron">#F4B63E</color>
     <color name="eggplant">#663D4E</color>
     <color name="sienna">#EB6460</color>
+
+    <color name="colorPrimary">#303030</color>
+    <color name="colorPrimaryDark">#303030</color>
+    <color name="colorAccent">#8661C1</color>
 </resources>

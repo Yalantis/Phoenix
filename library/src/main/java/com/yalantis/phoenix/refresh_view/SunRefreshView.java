@@ -16,7 +16,6 @@ import android.view.animation.Transformation;
 
 import com.yalantis.phoenix.PullToRefreshView;
 import com.yalantis.phoenix.R;
-import com.yalantis.phoenix.util.Logger;
 import com.yalantis.phoenix.util.Utils;
 
 /**
@@ -131,7 +130,9 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
         if (mScreenWidth <= 0) return;
 
         final int saveCount = canvas.save();
+
         canvas.translate(0, mTop);
+        canvas.clipRect(0, -mTop, mScreenWidth, mParent.getTotalDragDistance());
 
         drawSky(canvas);
         drawSun(canvas);
