@@ -44,7 +44,7 @@ public class PullToRefreshActivity extends AppCompatActivity {
                     return new ListViewFragment();
                 case 1:
                 default:
-                    return new ListViewFragment();
+                    return new RecyclerViewFragment();
             }
         }
 
@@ -60,7 +60,7 @@ public class PullToRefreshActivity extends AppCompatActivity {
                     return "ListView";
                 case 1:
                 default:
-                    return "ScrollView";
+                    return "RecyclerView";
             }
         }
     }
