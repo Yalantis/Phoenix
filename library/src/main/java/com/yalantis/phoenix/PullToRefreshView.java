@@ -19,7 +19,6 @@ import android.widget.ImageView;
 
 import com.yalantis.phoenix.refresh_view.BaseRefreshView;
 import com.yalantis.phoenix.refresh_view.SunRefreshView;
-import com.yalantis.phoenix.util.Logger;
 import com.yalantis.phoenix.util.Utils;
 
 import java.security.InvalidParameterException;
@@ -51,6 +50,11 @@ public class PullToRefreshView extends ViewGroup {
     private float mFromDragPercent;
     private boolean mNotify;
     private OnRefreshListener mListener;
+
+    private int mTargetPaddingTop;
+    private int mTargetPaddingBottom;
+    private int mTargetPaddingRight;
+    private int mTargetPaddingLeft;
 
     public PullToRefreshView(Context context) {
         this(context, null);
@@ -112,8 +116,13 @@ public class PullToRefreshView extends ViewGroup {
         if (getChildCount() > 0) {
             for (int i = 0; i < getChildCount(); i++) {
                 View child = getChildAt(i);
-                if (child != mRefreshView)
+                if (child != mRefreshView) {
                     mTarget = child;
+                    mTargetPaddingBottom = mTarget.getPaddingBottom();
+                    mTargetPaddingLeft = mTarget.getPaddingLeft();
+                    mTargetPaddingRight = mTarget.getPaddingRight();
+                    mTargetPaddingTop = mTarget.getPaddingTop();
+                }
             }
         }
     }
@@ -266,7 +275,7 @@ public class PullToRefreshView extends ViewGroup {
             animateOffsetToStartPosition();
         }
         mCurrentOffsetTop = mTarget.getTop();
-        mTarget.setPadding(0, 0, 0, mTotalDragDistance);
+        mTarget.setPadding(mTargetPaddingLeft, mTargetPaddingTop, mTargetPaddingRight, mTotalDragDistance);
     }
 
     private final Animation mAnimateToStartPosition = new Animation() {
@@ -298,7 +307,7 @@ public class PullToRefreshView extends ViewGroup {
 
         mCurrentDragPercent = targetPercent;
         mBaseRefreshView.setPercent(mCurrentDragPercent, true);
-        mTarget.setPadding(0, 0, 0, targetTop);
+        mTarget.setPadding(mTargetPaddingLeft, mTargetPaddingTop, mTargetPaddingRight, mTargetPaddingBottom + targetTop);
         setTargetOffsetTop(offset, false);
     }
 
