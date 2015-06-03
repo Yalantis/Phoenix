@@ -15,7 +15,7 @@ Check this [project on Behance] (https://www.behance.net/gallery/20411445/Mobile
 
 1. Include the library as local library project.
 
-    ``` compile 'com.yalantis:phoenix:1.2.0' ```
+    ``` compile 'com.yalantis:phoenix:1.2.1' ```
 
 2. Include the PullToRefreshView widget in your layout.
 
