@@ -21,7 +21,6 @@ import com.yalantis.phoenix.refresh_view.BaseRefreshView;
 import com.yalantis.phoenix.refresh_view.SunRefreshView;
 import com.yalantis.phoenix.util.Utils;
 
-import java.lang.NullPointerException;
 import java.security.InvalidParameterException;
 
 public class PullToRefreshView extends ViewGroup {
@@ -93,14 +92,12 @@ public class PullToRefreshView extends ViewGroup {
         mRefreshView.setImageDrawable(mBaseRefreshView);
     }
 
-    public void setPaddingTopBaseView(int size){
-        if(mRefreshView==null){
-            throw new NullPointerException("BaseRefreshView is null");
-        }else{
-            mRefreshView.setPadding(mRefreshView.getPaddingLeft(),size,mRefreshView.getPaddingRight(),mRefreshView.getPaddingBottom());
-        }
+    /**
+     * This method sets padding for the refresh (progress) view.
+     */
+    public void setRefreshViewPadding(int left, int top, int right, int bottom) {
+        mRefreshView.setPadding(left, top, right, bottom);
     }
-
 
     public int getTotalDragDistance() {
         return mTotalDragDistance;
