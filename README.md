@@ -15,7 +15,7 @@ Check this [project on Behance] (https://www.behance.net/gallery/20411445/Mobile
 
 1. Include the library as local library project.
 
-    ``` compile 'com.yalantis:phoenix:1.2.1' ```
+    ``` compile 'com.yalantis:phoenix:1.2.2' ```
 
 2. Include the PullToRefreshView widget in your layout.
 
@@ -73,6 +73,7 @@ If you need to change progress state:
 
   * Sample updated with RecyclerView example
   * Showing the refresh view just in it's bounds. (Issue with transparent / empty ListView)
+  * Possibility to set refresh view padding
 
 ### Version: 1.0
 
