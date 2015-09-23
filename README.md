@@ -1,4 +1,4 @@
-[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Phoenix-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1386) [![Yalantis](https://github.com/Yalantis/Phoenix/blob/master/badge.png)](http://yalantis.com/?utm_source=github)
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Phoenix-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1386) [![Yalantis](https://github.com/Yalantis/Phoenix/blob/master/badge.png)](https://yalantis.com/?utm_source=github)
 
 # Phoenix Pull-to-Refresh
 
