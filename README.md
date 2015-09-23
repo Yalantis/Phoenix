@@ -2,7 +2,7 @@
 
 # Phoenix Pull-to-Refresh
 
-#### This project aims to provide a simple and customizable pull to refresh implementation. Made in [Yalantis] (http://yalantis.com/?utm_source=github)
+#### This project aims to provide a simple and customizable pull to refresh implementation. Made in [Yalantis] (https://yalantis.com/?utm_source=github)
 
 Check this [project on Dribbble] (https://dribbble.com/shots/1650317-Pull-to-Refresh-Rentals)  
 Check this [project on Behance] (https://www.behance.net/gallery/20411445/Mobile-Animations-Interactions)  
