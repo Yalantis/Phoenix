@@ -4,9 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.ColorFilter;
 import android.graphics.Matrix;
-import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Animatable;
 import android.view.animation.Animation;
@@ -105,11 +103,14 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
     }
 
     private void createBitmaps() {
-        mSky = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.sky);
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.RGB_565;
+
+        mSky = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.sky, options);
         mSky = Bitmap.createScaledBitmap(mSky, mScreenWidth, mSkyHeight, true);
-        mTown = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.buildings);
+        mTown = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.buildings, options);
         mTown = Bitmap.createScaledBitmap(mTown, mScreenWidth, (int) (mScreenWidth * TOWN_RATIO), true);
-        mSun = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.sun);
+        mSun = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.sun, options);
         mSun = Bitmap.createScaledBitmap(mSun, mSunSize, mSunSize, true);
     }
 
@@ -270,21 +271,6 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
     @Override
     public void setBounds(int left, int top, int right, int bottom) {
         super.setBounds(left, top, right, mSkyHeight + top);
-    }
-
-    @Override
-    public void setAlpha(int alpha) {
-
-    }
-
-    @Override
-    public void setColorFilter(ColorFilter colorFilter) {
-
-    }
-
-    @Override
-    public int getOpacity() {
-        return PixelFormat.TRANSLUCENT;
     }
 
     @Override

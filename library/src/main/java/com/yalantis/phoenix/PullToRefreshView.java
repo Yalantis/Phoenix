@@ -417,8 +417,8 @@ public class PullToRefreshView extends ViewGroup {
         mListener = listener;
     }
 
-    public static interface OnRefreshListener {
-        public void onRefresh();
+    public interface OnRefreshListener {
+        void onRefresh();
     }
 
 }

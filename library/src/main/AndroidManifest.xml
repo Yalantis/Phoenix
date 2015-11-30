@@ -1,4 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.yalantis.phoenix">
-    <application android:allowBackup="true" />
-</manifest>
+<manifest package="com.yalantis.phoenix"/>
