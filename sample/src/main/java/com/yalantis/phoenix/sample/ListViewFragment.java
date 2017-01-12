@@ -3,6 +3,7 @@ package com.yalantis.phoenix.sample;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.view.ViewCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,8 @@ public class ListViewFragment extends BaseRefreshFragment {
 
         ListView listView = (ListView) rootView.findViewById(R.id.list_view);
         listView.setAdapter(new SampleAdapter(getActivity(), R.layout.list_item, mSampleList));
+
+        ViewCompat.setNestedScrollingEnabled(listView, true);
 
         mPullToRefreshView = (PullToRefreshView) rootView.findViewById(R.id.pull_to_refresh);
         mPullToRefreshView.setOnRefreshListener(new PullToRefreshView.OnRefreshListener() {
