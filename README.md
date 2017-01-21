@@ -37,7 +37,7 @@ Check this [project on Behance] (https://www.behance.net/gallery/20411445/Mobile
 
 3. In your `onCreate` method refer to the View and setup OnRefreshListener.
 	```java
-    mPullToRefreshView = (PullToRefreshView) findViewById(R.id.pull_to_refresh);
+    final PullToRefreshView mPullToRefreshView = (PullToRefreshView) findViewById(R.id.pull_to_refresh);
     mPullToRefreshView.setOnRefreshListener(new PullToRefreshView.OnRefreshListener() {
         @Override
         public void onRefresh() {
