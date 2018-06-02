@@ -322,7 +322,7 @@ public class PullToRefreshView extends ViewGroup {
         }
     }
     
-    private void getRefreshing() {
+    private boolean getRefreshing() {
         return mRefreshing;
     }
 
