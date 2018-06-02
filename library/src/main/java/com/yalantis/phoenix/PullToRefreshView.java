@@ -321,6 +321,10 @@ public class PullToRefreshView extends ViewGroup {
             }
         }
     }
+    
+    private boolean getRefreshing() {
+        return mRefreshing;
+    }
 
     private Animation.AnimationListener mToStartListener = new Animation.AnimationListener() {
         @Override
