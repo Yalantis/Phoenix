@@ -2,9 +2,6 @@ package com.yalantis.phoenix;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.support.annotation.NonNull;
-import android.support.v4.view.MotionEventCompat;
-import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,6 +13,10 @@ import android.view.animation.Interpolator;
 import android.view.animation.Transformation;
 import android.widget.AbsListView;
 import android.widget.ImageView;
+
+import androidx.annotation.NonNull;
+import androidx.core.view.MotionEventCompat;
+import androidx.core.view.ViewCompat;
 
 import com.yalantis.phoenix.refresh_view.BaseRefreshView;
 import com.yalantis.phoenix.refresh_view.SunRefreshView;
